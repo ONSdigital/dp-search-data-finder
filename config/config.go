@@ -29,6 +29,7 @@ type KafkaConfig struct {
 	SecClientCert         string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
 	SecSkipVerify         bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
 	NumWorkers            int      `envconfig:"KAFKA_NUM_WORKERS"`
+	ReindexRequestedGroup string   `envconfig:"KAFKA_REINDEX_REQUESTED_GROUP"`
 	ReindexRequestedTopic string   `envconfig:"KAFKA_REINDEX_REQUESTED_TOPIC"`
 	ContentUpdatedTopic   string   `envconfig:"KAFKA_CONTENT_UPDATED_TOPIC"`
 }
@@ -53,6 +54,7 @@ func Get() (*Config, error) {
 			Version:               "1.0.2",
 			OffsetOldest:          true,
 			NumWorkers:            1,
+			ReindexRequestedGroup: "dp-search-data-finder",
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},

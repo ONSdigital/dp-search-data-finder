@@ -29,6 +29,7 @@ func TestConfig(t *testing.T) {
 				So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
 				So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")
 				So(cfg.KafkaConfig.NumWorkers, ShouldEqual, 1)
+				So(cfg.KafkaConfig.ReindexRequestedGroup, ShouldEqual, "dp-search-data-finder")
 				So(cfg.KafkaConfig.ReindexRequestedTopic, ShouldEqual, "reindex-requested")
 				So(cfg.KafkaConfig.ContentUpdatedTopic, ShouldEqual, "content-updated")
 			})
