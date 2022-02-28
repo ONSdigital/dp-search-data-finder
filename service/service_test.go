@@ -174,10 +174,10 @@ func TestClose(t *testing.T) {
 		hcStopped := false
 
 		consumerMock := &kafkatest.IConsumerGroupMock{
-			StopListeningToConsumerFunc: func(ctx context.Context) error { return nil },
-			CloseFunc:                   func(ctx context.Context) error { return nil },
-			CheckerFunc:                 func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
-			ChannelsFunc:                func() *kafka.ConsumerGroupChannels { return &kafka.ConsumerGroupChannels{} },
+			StopFunc:     func() error { return nil },
+			CloseFunc:    func(ctx context.Context) error { return nil },
+			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+			ChannelsFunc: func() *kafka.ConsumerGroupChannels { return &kafka.ConsumerGroupChannels{} },
 		}
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
@@ -217,7 +217,7 @@ func TestClose(t *testing.T) {
 
 			err = svc.Close(context.Background())
 			So(err, ShouldBeNil)
-			So(len(consumerMock.StopListeningToConsumerCalls()), ShouldEqual, 1)
+			So(len(consumerMock.StopCalls()), ShouldEqual, 1)
 			So(len(hcMock.StopCalls()), ShouldEqual, 1)
 			So(len(consumerMock.CloseCalls()), ShouldEqual, 1)
 			So(len(serverMock.ShutdownCalls()), ShouldEqual, 1)

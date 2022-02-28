@@ -47,9 +47,6 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	// Event Handler for Kafka Consumer
 	event.Consume(ctx, consumer, &event.HelloCalledHandler{}, cfg)
 
-	// Kafka error logging go-routine
-	consumer.LogErrors(ctx)
-
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
