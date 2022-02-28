@@ -19,19 +19,18 @@ type Config struct {
 }
 
 // KafkaConfig contains the config required to connect to Kafka
-// TODO: change "hello-called" to your topic (config field name, env var name, default value later)
 type KafkaConfig struct {
-	Brokers          []string `envconfig:"KAFKA_ADDR"`
-	Version          string   `envconfig:"KAFKA_VERSION"`
-	OffsetOldest     bool     `envconfig:"KAFKA_OFFSET_OLDEST"`
-	SecProtocol      string   `envconfig:"KAFKA_SEC_PROTO"`
-	SecCACerts       string   `envconfig:"KAFKA_SEC_CA_CERTS"`
-	SecClientKey     string   `envconfig:"KAFKA_SEC_CLIENT_KEY"    json:"-"`
-	SecClientCert    string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
-	SecSkipVerify    bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
-	NumWorkers       int      `envconfig:"KAFKA_NUM_WORKERS"`
-	HelloCalledGroup string   `envconfig:"HELLO_CALLED_GROUP"`
-	HelloCalledTopic string   `envconfig:"HELLO_CALLED_TOPIC"`
+	Brokers               []string `envconfig:"KAFKA_ADDR"`
+	Version               string   `envconfig:"KAFKA_VERSION"`
+	OffsetOldest          bool     `envconfig:"KAFKA_OFFSET_OLDEST"`
+	SecProtocol           string   `envconfig:"KAFKA_SEC_PROTO"`
+	SecCACerts            string   `envconfig:"KAFKA_SEC_CA_CERTS"`
+	SecClientKey          string   `envconfig:"KAFKA_SEC_CLIENT_KEY"    json:"-"`
+	SecClientCert         string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
+	SecSkipVerify         bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
+	NumWorkers            int      `envconfig:"KAFKA_NUM_WORKERS"`
+	ReindexRequestedTopic string   `envconfig:"KAFKA_REINDEX_REQUESTED_TOPIC"`
+	ContentUpdatedTopic   string   `envconfig:"KAFKA_CONTENT_UPDATED_TOPIC"`
 }
 
 var cfg *Config
@@ -50,12 +49,12 @@ func Get() (*Config, error) {
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		OutputFilePath:             "/tmp/helloworld.txt",
 		KafkaConfig: KafkaConfig{
-			Brokers:          []string{"localhost:9092"},
-			Version:          "1.0.2",
-			OffsetOldest:     true,
-			NumWorkers:       1,
-			HelloCalledGroup: "dp-search-data-finder",
-			HelloCalledTopic: "hello-called",
+			Brokers:               []string{"localhost:9092"},
+			Version:               "1.0.2",
+			OffsetOldest:          true,
+			NumWorkers:            1,
+			ReindexRequestedTopic: "reindex-requested",
+			ContentUpdatedTopic:   "content-updated",
 		},
 	}
 

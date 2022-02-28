@@ -29,8 +29,8 @@ func TestConfig(t *testing.T) {
 				So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
 				So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")
 				So(cfg.KafkaConfig.NumWorkers, ShouldEqual, 1)
-				So(cfg.KafkaConfig.HelloCalledGroup, ShouldEqual, "dp-search-data-finder")
-				So(cfg.KafkaConfig.HelloCalledTopic, ShouldEqual, "hello-called")
+				So(cfg.KafkaConfig.ReindexRequestedTopic, ShouldEqual, "reindex-requested")
+				So(cfg.KafkaConfig.ContentUpdatedTopic, ShouldEqual, "content-updated")
 			})
 
 			Convey("Then a second call to config should return the same config", func() {

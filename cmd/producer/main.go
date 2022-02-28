@@ -40,7 +40,7 @@ func main() {
 	}
 	kafkaProducer, err := kafka.NewProducer(ctx, pConfig)
 	if err != nil {
-		log.Fatal(ctx, "fatal error trying to create kafka producer", err, log.Data{"topic": cfg.KafkaConfig.HelloCalledTopic})
+		log.Fatal(ctx, "fatal error trying to create kafka producer", err, log.Data{"topic": cfg.KafkaConfig.ContentUpdatedTopic})
 		os.Exit(1)
 	}
 
@@ -51,11 +51,11 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		e := scanEvent(scanner)
-		log.Info(ctx, "sending hello-called event", log.Data{"helloCalledEvent": e})
+		log.Info(ctx, "sending content-updated event", log.Data{"contentUpdatedEvent": e})
 
-		bytes, err := schema.HelloCalledEvent.Marshal(e)
+		bytes, err := schema.ContentUpdatedEvent.Marshal(e)
 		if err != nil {
-			log.Fatal(ctx, "hello-called event error", err)
+			log.Fatal(ctx, "content-updated event error", err)
 			os.Exit(1)
 		}
 
@@ -65,16 +65,16 @@ func main() {
 	}
 }
 
-// scanEvent creates a HelloCalled event according to the user input
-func scanEvent(scanner *bufio.Scanner) *event.HelloCalled {
-	fmt.Println("--- [Send Kafka HelloCalled] ---")
+// scanEvent creates a ContentUpdated event according to the user input
+func scanEvent(scanner *bufio.Scanner) *event.ContentUpdated {
+	fmt.Println("--- [Send Kafka ContentUpdated] ---")
 
 	fmt.Println("Please type the recipient name")
 	fmt.Printf("$ ")
 	scanner.Scan()
 	name := scanner.Text()
 
-	return &event.HelloCalled{
+	return &event.ContentUpdated{
 		RecipientName: name,
 	}
 }

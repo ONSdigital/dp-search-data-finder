@@ -4,16 +4,31 @@ import (
 	"github.com/ONSdigital/go-ns/avro"
 )
 
-// TODO: remove or replace hello called structure and model with app specific
-var helloCalledEvent = `{
+// TODO: replace content updated structure and model with correct design
+var contentUpdatedEvent = `{
   "type": "record",
-  "name": "hello-called",
+  "name": "content-updated",
   "fields": [
     {"name": "recipient_name", "type": "string", "default": ""}
   ]
 }`
 
-// HelloCalledEvent is the Avro schema for Hello Called messages.
-var HelloCalledEvent = &avro.Schema{
-	Definition: helloCalledEvent,
+// ContentUpdatedEvent is the Avro schema for Content Updated messages.
+var ContentUpdatedEvent = &avro.Schema{
+	Definition: contentUpdatedEvent,
+}
+
+var reindexRequestedEvent = `{
+	"type": "record",
+	"name": "reindex-requested",
+	"fields": [
+		{"name": "job_id", "type": "string", "default": ""},
+		{"name": "search_index", "type": "string", "default": ""},
+		{"name": "trace_id", "type": "string", "default": ""}
+	]
+}`
+
+// ReindexRequestedEvent is the Avro schema for Reindex Requested messages.
+var ReindexRequestedEvent = &avro.Schema{
+	Definition: reindexRequestedEvent,
 }

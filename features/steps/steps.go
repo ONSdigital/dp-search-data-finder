@@ -18,24 +18,24 @@ import (
 )
 
 func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^these hello events are consumed:$`, c.theseHelloEventsAreConsumed)
-	ctx.Step(`^I should receive a hello-world response$`, c.iShouldReceiveAHelloworldResponse)
+	ctx.Step(`^these reindex-requested events are consumed:$`, c.theseReindexrequestedEventsAreConsumed)
+	ctx.Step(`^I should receive a reindex-requested response$`, c.iShouldReceiveAReindexrequestedResponse)
 }
 
-func (c *Component) iShouldReceiveAHelloworldResponse() error {
+func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
 	content, err := ioutil.ReadFile(c.cfg.OutputFilePath)
 	if err != nil {
 		return err
 	}
 
-	assert.Equal(c, "Hello, Tim!", string(content))
+	assert.Equal(c, "Hello there!", string(content))
 
 	return c.StepError()
 }
 
-func (c *Component) theseHelloEventsAreConsumed(table *godog.Table) error {
+func (c *Component) theseReindexrequestedEventsAreConsumed(table *godog.Table) error {
 
-	observationEvents, err := c.convertToHelloEvents(table)
+	observationEvents, err := c.convertToReindexRequestedEvents(table)
 	if err != nil {
 		return err
 	}
@@ -62,17 +62,17 @@ func (c *Component) theseHelloEventsAreConsumed(table *godog.Table) error {
 	return nil
 }
 
-func (c *Component) convertToHelloEvents(table *godog.Table) ([]*event.HelloCalled, error) {
+func (c *Component) convertToReindexRequestedEvents(table *godog.Table) ([]*event.ReindexRequested, error) {
 	assist := assistdog.NewDefault()
-	events, err := assist.CreateSlice(&event.HelloCalled{}, table)
+	events, err := assist.CreateSlice(&event.ReindexRequested{}, table)
 	if err != nil {
 		return nil, err
 	}
-	return events.([]*event.HelloCalled), nil
+	return events.([]*event.ReindexRequested), nil
 }
 
-func (c *Component) sendToConsumer(e *event.HelloCalled) error {
-	bytes, err := schema.HelloCalledEvent.Marshal(e)
+func (c *Component) sendToConsumer(e *event.ReindexRequested) error {
+	bytes, err := schema.ReindexRequestedEvent.Marshal(e)
 	if err != nil {
 		return err
 	}
