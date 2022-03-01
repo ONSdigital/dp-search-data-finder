@@ -3,13 +3,13 @@ package event
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// ReindexRequestedHandler ...
+// ReindexRequestedHandler is the hander for reindex requested messages.
 type ReindexRequestedHandler struct {
 }
 
@@ -21,7 +21,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, cfg *config.Config
 	log.Info(ctx, "event handler called", logData)
 
 	greeting := fmt.Sprintf("Hello there! Job id is %s", event.JobID)
-	err = ioutil.WriteFile(cfg.OutputFilePath, []byte(greeting), 0644)
+	err = os.WriteFile(cfg.OutputFilePath, []byte(greeting), 0600)
 	if err != nil {
 		return err
 	}

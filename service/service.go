@@ -142,10 +142,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context,
-	hc HealthChecker,
-	consumer kafka.IConsumerGroup) (err error) {
-
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup) (err error) {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {

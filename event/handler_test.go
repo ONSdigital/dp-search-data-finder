@@ -10,7 +10,6 @@ import (
 )
 
 func TestReindexRequestedHandler_Handle(t *testing.T) {
-
 	Convey("Given a successful event handler, when Handle is triggered", t, func() {
 		eventHandler := &event.ReindexRequestedHandler{}
 		filePath := "/tmp/helloworld.txt"
@@ -18,7 +17,6 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 		err := eventHandler.Handle(testCtx, &config.Config{OutputFilePath: filePath}, &testEvent)
 		So(err, ShouldBeNil)
 	})
-
 	Convey("handler returns an error when cannot write to file", t, func() {
 		eventHandler := &event.ReindexRequestedHandler{}
 		filePath := ""

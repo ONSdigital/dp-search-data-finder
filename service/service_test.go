@@ -42,7 +42,6 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 }
 
 func TestRun(t *testing.T) {
-
 	Convey("Having a set of mocked dependencies", t, func() {
 		consumerMock := &kafkatest.IConsumerGroupMock{
 			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
@@ -108,7 +107,6 @@ func TestRun(t *testing.T) {
 		})
 
 		Convey("Given that all dependencies are successfully initialised", func() {
-
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:    funcDoGetHTTPServer,
 				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
@@ -137,7 +135,6 @@ func TestRun(t *testing.T) {
 		})
 
 		Convey("Given that Checkers cannot be registered", func() {
-
 			errAddheckFail := errors.New("Error(s) registering checkers for healthcheck")
 			hcMockAddFail := &serviceMock.HealthCheckerMock{
 				AddCheckFunc: func(name string, checker healthcheck.Checker) error { return errAddheckFail },
@@ -168,9 +165,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-
 	Convey("Having a correctly initialised service", t, func() {
-
 		hcStopped := false
 
 		consumerMock := &kafkatest.IConsumerGroupMock{
@@ -199,7 +194,6 @@ func TestClose(t *testing.T) {
 		}
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
-
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
@@ -222,9 +216,7 @@ func TestClose(t *testing.T) {
 			So(len(consumerMock.CloseCalls()), ShouldEqual, 1)
 			So(len(serverMock.ShutdownCalls()), ShouldEqual, 1)
 		})
-
 		Convey("If services fail to stop, the Close operation tries to close all dependencies and returns an error", func() {
-
 			failingserverMock := &serviceMock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
 				ShutdownFunc: func(ctx context.Context) error {

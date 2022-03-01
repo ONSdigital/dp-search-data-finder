@@ -2,7 +2,6 @@ package steps
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,7 +22,7 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 }
 
 func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
-	content, err := ioutil.ReadFile(c.cfg.OutputFilePath)
+	content, err := os.ReadFile(c.cfg.OutputFilePath)
 	if err != nil {
 		return err
 	}
@@ -34,7 +33,6 @@ func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
 }
 
 func (c *Component) theseReindexrequestedEventsAreConsumed(table *godog.Table) error {
-
 	observationEvents, err := c.convertToReindexRequestedEvents(table)
 	if err != nil {
 		return err
@@ -79,7 +77,6 @@ func (c *Component) sendToConsumer(e *event.ReindexRequested) error {
 
 	c.KafkaConsumer.Channels().Upstream <- kafkatest.NewMessage(bytes, 0)
 	return nil
-
 }
 
 func registerInterrupt() chan os.Signal {
