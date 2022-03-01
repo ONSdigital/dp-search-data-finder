@@ -20,7 +20,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, cfg *config.Config
 	}
 	log.Info(ctx, "event handler called", logData)
 
-	greeting := fmt.Sprintf("Hello there!")
+	greeting := fmt.Sprintf("Hello there! Job id is %s", event.JobID)
 	err = ioutil.WriteFile(cfg.OutputFilePath, []byte(greeting), 0644)
 	if err != nil {
 		return err

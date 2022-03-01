@@ -19,11 +19,9 @@ type Component struct {
 	componenttest.ErrorFeature
 	serviceList   *service.ExternalServiceList
 	KafkaConsumer kafka.IConsumerGroup
-	killChannel   chan os.Signal
-	apiFeature    *componenttest.APIFeature
-	errorChan     chan error
-	svc           *service.Service
-	cfg           *config.Config
+	errorChan chan error
+	svc       *service.Service
+	cfg       *config.Config
 }
 
 func NewComponent() *Component {

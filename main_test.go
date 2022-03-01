@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"testing"
@@ -20,13 +21,19 @@ type ComponentTest struct {
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	component := steps.NewComponent()
 
-	ctx.BeforeScenario(func(*godog.Scenario) {
+	beforeScenarioHook := func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		component.Reset()
-	})
+		return ctx, nil
+	}
 
-	ctx.AfterScenario(func(*godog.Scenario, error) {
+	ctx.Before(beforeScenarioHook)
+
+	afterScenarioHook := func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 		component.Close()
-	})
+		return ctx, err
+	}
+
+	ctx.After(afterScenarioHook)
 
 	component.RegisterSteps(ctx)
 }

@@ -28,7 +28,7 @@ func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
 		return err
 	}
 
-	assert.Equal(c, "Hello there!", string(content))
+	assert.Equal(c, "Hello there! Job id is 1234", string(content))
 
 	return c.StepError()
 }

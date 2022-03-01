@@ -60,7 +60,11 @@ func main() {
 		}
 
 		// Send bytes to Output channel, after calling Initialise just in case it is not initialised.
-		kafkaProducer.Initialise(ctx)
+		err = kafkaProducer.Initialise(ctx)
+		if err != nil {
+			log.Fatal(ctx, "initialise kafka producer error", err)
+			os.Exit(1)
+		}
 		kafkaProducer.Channels().Output <- bytes
 	}
 }
