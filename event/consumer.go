@@ -5,6 +5,7 @@ import (
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -13,7 +14,7 @@ import (
 
 // Handler represents a handler for processing a single event.
 type Handler interface {
-	Handle(ctx context.Context, cfg *config.Config, reindexRequested *ReindexRequested) error
+	Handle(ctx context.Context, cfg *config.Config, reindexRequested *models.ReindexRequested) error
 }
 
 // Consume converts messages to event instances, and pass the event to the provided handler.
@@ -70,8 +71,8 @@ func processMessage(ctx context.Context, message kafka.Message, handler Handler,
 }
 
 // unmarshal converts a event instance to []byte.
-func unmarshal(message kafka.Message) (*ReindexRequested, error) {
-	var event ReindexRequested
+func unmarshal(message kafka.Message) (*models.ReindexRequested, error) {
+	var event models.ReindexRequested
 	err := schema.ReindexRequestedEvent.Unmarshal(message.GetData(), &event)
 	return &event, err
 }

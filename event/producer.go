@@ -23,7 +23,7 @@ type ContentUpdatedProducer struct {
 }
 
 // ContentUpdate produce a kafka message for an instance which has been successfully processed.
-func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, event models.ContentUpdate) error {
+func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, event models.ContentUpdated) error {
 	bytes, err := p.Marshaller.Marshal(event)
 	if err != nil {
 		log.Fatal(ctx, "Marshaller.Marshal", err)

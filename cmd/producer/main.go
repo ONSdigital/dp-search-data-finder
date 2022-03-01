@@ -9,7 +9,7 @@ import (
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-search-data-finder/config"
-	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -70,15 +70,15 @@ func main() {
 }
 
 // scanEvent creates a ContentUpdated event according to the user input
-func scanEvent(scanner *bufio.Scanner) *event.ContentUpdated {
+func scanEvent(scanner *bufio.Scanner) *models.ContentUpdated {
 	fmt.Println("--- [Send Kafka ContentUpdated] ---")
 
-	fmt.Println("Please type the recipient name")
+	fmt.Println("Please type the URI")
 	fmt.Printf("$ ")
 	scanner.Scan()
-	name := scanner.Text()
+	uri := scanner.Text()
 
-	return &event.ContentUpdated{
-		RecipientName: name,
+	return &models.ContentUpdated{
+		URI: uri,
 	}
 }

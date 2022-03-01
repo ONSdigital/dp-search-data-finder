@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -14,7 +15,7 @@ type ReindexRequestedHandler struct {
 }
 
 // Handle takes a single event.
-func (h *ReindexRequestedHandler) Handle(ctx context.Context, cfg *config.Config, event *ReindexRequested) (err error) {
+func (h *ReindexRequestedHandler) Handle(ctx context.Context, cfg *config.Config, event *models.ReindexRequested) (err error) {
 	logData := log.Data{
 		"event": event,
 	}

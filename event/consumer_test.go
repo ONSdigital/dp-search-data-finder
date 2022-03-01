@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/event/mock"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -19,7 +20,7 @@ var testCtx = context.Background()
 
 var errHandler = errors.New("handler error")
 
-var testEvent = event.ReindexRequested{
+var testEvent = models.ReindexRequested{
 	JobID:       "job id",
 	SearchIndex: "search index",
 	TraceID:     "trace id",
@@ -42,7 +43,7 @@ func TestConsume(t *testing.T) {
 
 		handlerWg := &sync.WaitGroup{}
 		mockEventHandler := &mock.HandlerMock{
-			HandleFunc: func(ctx context.Context, config *config.Config, event *event.ReindexRequested) error {
+			HandleFunc: func(ctx context.Context, config *config.Config, event *models.ReindexRequested) error {
 				defer handlerWg.Done()
 				return nil
 			},
@@ -96,7 +97,7 @@ func TestConsume(t *testing.T) {
 		})
 
 		Convey("With a failing handler and a kafka message with the valid schema being sent to the Upstream channel", func() {
-			mockEventHandler.HandleFunc = func(ctx context.Context, config *config.Config, event *event.ReindexRequested) error {
+			mockEventHandler.HandleFunc = func(ctx context.Context, config *config.Config, event *models.ReindexRequested) error {
 				defer handlerWg.Done()
 				return errHandler
 			}
@@ -121,7 +122,7 @@ func TestConsume(t *testing.T) {
 }
 
 // marshal helper method to marshal a event into a []byte
-func marshal(irEvent event.ReindexRequested) []byte {
+func marshal(irEvent models.ReindexRequested) []byte {
 	bytes, err := schema.ReindexRequestedEvent.Marshal(irEvent)
 	So(err, ShouldBeNil)
 	return bytes
