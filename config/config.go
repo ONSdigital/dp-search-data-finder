@@ -11,12 +11,12 @@ const KafkaTLSProtocolFlag = "TLS"
 // Config represents service configuration for dp-search-data-finder
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
+	ContentUpdatedTopicFlag    bool          `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	OutputFilePath             string        `envconfig:"OUTPUT_FILE_PATH"`
 	KafkaConfig                KafkaConfig
-	ContentUpdatedTopicFlag    bool `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -46,6 +46,7 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   "localhost:28000",
+		ContentUpdatedTopicFlag:    false,
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
@@ -59,7 +60,6 @@ func Get() (*Config, error) {
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},
-		ContentUpdatedTopicFlag: false,
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 
 	dpkafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-search-data-finder/models"
@@ -24,13 +23,13 @@ type ContentUpdatedProducer struct {
 
 // ContentUpdate produce a kafka message for an instance which has been successfully processed.
 func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, event models.ContentUpdated) error {
-	bytes, err := p.Marshaller.Marshal(event)
+	eventBytes, err := p.Marshaller.Marshal(event)
 	if err != nil {
-		log.Fatal(ctx, "Marshaller.Marshal", err)
-		return fmt.Errorf(fmt.Sprintf("Marshaller.Marshal returned an error: event=%v: %%w", event), err)
+		log.Fatal(ctx, "failed to marshal event", err)
+		return err
 	}
 
-	p.Producer.Channels().Output <- bytes
+	p.Producer.Channels().Output <- eventBytes
 	log.Info(ctx, "completed successfully", log.Data{"event": event, "package": "event.ContentUpdate"})
 	return nil
 }
