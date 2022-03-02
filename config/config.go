@@ -16,6 +16,7 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	OutputFilePath             string        `envconfig:"OUTPUT_FILE_PATH"`
 	KafkaConfig                KafkaConfig
+	ContentUpdatedTopicFlag    bool `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -58,6 +59,7 @@ func Get() (*Config, error) {
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},
+		ContentUpdatedTopicFlag: false,
 	}
 
 	return cfg, envconfig.Process("", cfg)
