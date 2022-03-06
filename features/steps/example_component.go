@@ -29,6 +29,7 @@ func NewComponent() *Component {
 
 	consumer := kafkatest.NewMessageConsumer(false)
 	consumer.CheckerFunc = funcCheck
+	consumer.StartFunc = func() error { return nil }
 	c.KafkaConsumer = consumer
 
 	cfg, err := config.Get()

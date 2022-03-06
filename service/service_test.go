@@ -46,6 +46,7 @@ func TestRun(t *testing.T) {
 		consumerMock := &kafkatest.IConsumerGroupMock{
 			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 			ChannelsFunc: func() *kafka.ConsumerGroupChannels { return &kafka.ConsumerGroupChannels{} },
+			StartFunc:    func() error { return nil },
 		}
 
 		hcMock := &serviceMock.HealthCheckerMock{
@@ -173,6 +174,7 @@ func TestClose(t *testing.T) {
 			CloseFunc:    func(ctx context.Context) error { return nil },
 			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 			ChannelsFunc: func() *kafka.ConsumerGroupChannels { return &kafka.ConsumerGroupChannels{} },
+			StartFunc:    func() error { return nil },
 		}
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
