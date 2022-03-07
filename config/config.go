@@ -16,6 +16,7 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	OutputFilePath             string        `envconfig:"OUTPUT_FILE_PATH"`
 	KafkaConfig                KafkaConfig
+	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -50,7 +51,7 @@ func Get() (*Config, error) {
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		OutputFilePath:             "/tmp/helloworld.txt",
 		KafkaConfig: KafkaConfig{
-			Brokers:               []string{"localhost:9092"},
+			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 			Version:               "1.0.2",
 			OffsetOldest:          true,
 			NumWorkers:            1,
@@ -58,6 +59,7 @@ func Get() (*Config, error) {
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},
+		ServiceAuthToken: "",
 	}
 
 	return cfg, envconfig.Process("", cfg)

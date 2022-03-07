@@ -21,7 +21,7 @@ func TestConfig(t *testing.T) {
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 				So(cfg.HealthCheckInterval, ShouldEqual, 30*time.Second)
 				So(cfg.HealthCheckCriticalTimeout, ShouldEqual, 90*time.Second)
-				So(cfg.KafkaConfig.Brokers, ShouldHaveLength, 1)
+				So(cfg.KafkaConfig.Brokers, ShouldHaveLength, 3)
 				So(cfg.KafkaConfig.Brokers[0], ShouldEqual, "localhost:9092")
 				So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
 				So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")
