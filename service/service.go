@@ -45,7 +45,12 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	}
 
 	// Event Handler for Kafka Consumer
-	event.Consume(ctx, consumer, &event.ReindexRequestedHandler{}, cfg)
+	handler := &event.ReindexRequestedHandler{}
+	event.Consume(ctx, consumer, handler, cfg)
+	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
+		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
+		return nil, consumerStartErr
+	}
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
