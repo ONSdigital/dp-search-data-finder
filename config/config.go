@@ -12,8 +12,8 @@ const KafkaTLSProtocolFlag = "TLS"
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
-	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	KafkaConfig                KafkaConfig
 	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
 }
@@ -21,17 +21,17 @@ type Config struct {
 // KafkaConfig contains the config required to connect to Kafka
 type KafkaConfig struct {
 	Brokers               []string `envconfig:"KAFKA_ADDR"`
-	Version               string   `envconfig:"KAFKA_VERSION"`
-	OffsetOldest          bool     `envconfig:"KAFKA_OFFSET_OLDEST"`
-	SecProtocol           string   `envconfig:"KAFKA_SEC_PROTO"`
-	SecCACerts            string   `envconfig:"KAFKA_SEC_CA_CERTS"`
-	SecClientKey          string   `envconfig:"KAFKA_SEC_CLIENT_KEY"    json:"-"`
-	SecClientCert         string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
-	SecSkipVerify         bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
+	ContentUpdatedTopic   string   `envconfig:"KAFKA_CONTENT_UPDATED_TOPIC"`
 	NumWorkers            int      `envconfig:"KAFKA_NUM_WORKERS"`
+	OffsetOldest          bool     `envconfig:"KAFKA_OFFSET_OLDEST"`
 	ReindexRequestedGroup string   `envconfig:"KAFKA_REINDEX_REQUESTED_GROUP"`
 	ReindexRequestedTopic string   `envconfig:"KAFKA_REINDEX_REQUESTED_TOPIC"`
-	ContentUpdatedTopic   string   `envconfig:"KAFKA_CONTENT_UPDATED_TOPIC"`
+	SecProtocol           string   `envconfig:"KAFKA_SEC_PROTO"`
+	SecCACerts            string   `envconfig:"KAFKA_SEC_CA_CERTS"`
+	SecClientCert         string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
+	SecClientKey          string   `envconfig:"KAFKA_SEC_CLIENT_KEY"    json:"-"`
+	SecSkipVerify         bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
+	Version               string   `envconfig:"KAFKA_VERSION"`
 }
 
 var cfg *Config
@@ -46,16 +46,21 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		BindAddr:                   "localhost:28000",
 		GracefulShutdownTimeout:    5 * time.Second,
-		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
+		HealthCheckInterval:        30 * time.Second,
 		KafkaConfig: KafkaConfig{
 			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
-			Version:               "1.0.2",
-			OffsetOldest:          true,
+			ContentUpdatedTopic:   "content-updated",
 			NumWorkers:            1,
+			OffsetOldest:          true,
 			ReindexRequestedGroup: "dp-search-data-finder",
 			ReindexRequestedTopic: "reindex-requested",
-			ContentUpdatedTopic:   "content-updated",
+			SecProtocol:           "",
+			SecCACerts:            "",
+			SecClientCert:         "",
+			SecClientKey:          "",
+			SecSkipVerify:         false,
+			Version:               "1.0.2",
 		},
 		ZebedeeURL: "http://localhost:8082",
 	}
