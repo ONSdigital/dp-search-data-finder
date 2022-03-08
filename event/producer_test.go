@@ -7,6 +7,7 @@ import (
 
 	dpkafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
+	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/event/mock"
 	"github.com/ONSdigital/dp-search-data-finder/models"
@@ -57,8 +58,9 @@ func TestProducer_ContentUpdated(t *testing.T) {
 			Producer:   kafkaProducerMock,
 			Marshaller: marshallerMock,
 		}
-		Convey("When ContentUpdate is called on the event producer", func() {
-			err := contentUpdatedProducer.ContentUpdate(ctx, expectedContentUpdatedEvent)
+
+		Convey("When ContentUpdate is called on the event producer with ContentUpdatedTopicFlag enabled", func() {
+			err := contentUpdatedProducer.ContentUpdate(ctx, &config.Config{ContentUpdatedTopicFlag: true}, expectedContentUpdatedEvent)
 			So(err, ShouldBeNil)
 
 			var avroBytes []byte

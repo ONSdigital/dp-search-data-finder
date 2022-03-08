@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	kafka "github.com/ONSdigital/dp-kafka/v3"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
@@ -27,25 +27,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	pConfig := &kafka.ProducerConfig{
+	// Create Kafka Producer
+	pChannels := kafka.CreateProducerChannels()
+	kafkaProducer, err := kafka.NewProducer(ctx, cfg.KafkaConfig.Brokers, cfg.KafkaConfig.ContentUpdatedTopic, pChannels, &kafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaConfig.Version,
-	}
-	if cfg.KafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
-		pConfig.SecurityConfig = kafka.GetSecurityConfig(
-			cfg.KafkaConfig.SecCACerts,
-			cfg.KafkaConfig.SecClientCert,
-			cfg.KafkaConfig.SecClientKey,
-			cfg.KafkaConfig.SecSkipVerify,
-		)
-	}
-	kafkaProducer, err := kafka.NewProducer(ctx, pConfig)
+	})
 	if err != nil {
 		log.Fatal(ctx, "fatal error trying to create kafka producer", err, log.Data{"topic": cfg.KafkaConfig.ContentUpdatedTopic})
 		os.Exit(1)
 	}
 
 	// kafka error logging go-routines
-	kafkaProducer.LogErrors(ctx)
+	kafkaProducer.Channels().LogErrors(ctx, "kafka producer")
 
 	time.Sleep(500 * time.Millisecond)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -60,10 +53,9 @@ func main() {
 		}
 
 		// Send bytes to Output channel, after calling Initialise just in case it is not initialised.
-		err = kafkaProducer.Initialise(ctx)
-		if err != nil {
-			log.Fatal(ctx, "initialise kafka producer error", err)
-			os.Exit(1)
+		if err := kafkaProducer.Initialise(ctx); err != nil {
+			log.Warn(ctx, "failed to initialise kafka producer")
+			return
 		}
 		kafkaProducer.Channels().Output <- bytes
 	}
@@ -73,12 +65,16 @@ func main() {
 func scanEvent(scanner *bufio.Scanner) *models.ContentUpdated {
 	fmt.Println("--- [Send Kafka ContentUpdated] ---")
 
-	fmt.Println("Please type the URI")
+	fmt.Println("Please type the URI like /help")
 	fmt.Printf("$ ")
 	scanner.Scan()
 	uri := scanner.Text()
 
 	return &models.ContentUpdated{
-		URI: uri,
+		URI:      uri,
+		DataType: "legacy",
+		JobID: "",
+		TraceID:  "054435ded",
+		SearchIndex: "ONS",
 	}
 }

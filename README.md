@@ -43,6 +43,29 @@ An example event can be created using the helper script, `make produce`.
 
  `curl localhost:8125/health`
 
+
+### Content Updated Topic
+
+To check if service produced an event for contentUpdatedTopic
+
+  make test
+
+set ContentUpdatedTopicFlag in config as true/false
+
+Run the service
+  go build
+  ./dp-search-data-finder
+
+Send the event
+  make produce
+  Type uri (any text)
+
+Check the service logs if either of the following appears and there is no error in service logs   
+  ContentUpdatedTopic Flag is enabled/disabled
+  
+
+
+
 ### Contributing
 
 See [CONTRIBUTING](CONTRIBUTING.md) for details.

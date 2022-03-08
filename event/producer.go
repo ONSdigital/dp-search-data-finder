@@ -5,6 +5,7 @@ import (
 
 	dpkafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-search-data-finder/models"
+	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -22,14 +23,20 @@ type ContentUpdatedProducer struct {
 }
 
 // ContentUpdate produce a kafka message for an instance which has been successfully processed.
-func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, event models.ContentUpdated) error {
-	eventBytes, err := p.Marshaller.Marshal(event)
-	if err != nil {
-		log.Fatal(ctx, "failed to marshal event", err)
-		return err
-	}
+func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
 
-	p.Producer.Channels().Output <- eventBytes
-	log.Info(ctx, "completed successfully", log.Data{"event": event, "package": "event.ContentUpdate"})
+	if (cfg.ContentUpdatedTopicFlag){
+		log.Info(ctx, "ContentUpdatedTopic Flag is enabled")
+		eventBytes, err := p.Marshaller.Marshal(event)
+		if err != nil {
+			log.Fatal(ctx, "failed to marshal event", err)
+			return err
+		}
+	
+		p.Producer.Channels().Output <- eventBytes
+		log.Info(ctx, "event produced successfully", log.Data{"event": event, "package": "event.ContentUpdate"})	
+	} else {
+		log.Info(ctx, "ContentUpdatedTopic Flag is disabled")
+	}
 	return nil
 }
