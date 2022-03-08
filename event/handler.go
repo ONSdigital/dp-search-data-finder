@@ -26,7 +26,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *ReindexRequ
 
 	urlList := make([]string, 10)
 	publishedItems := publishedIndex.Items
-	for i := 0; i < 3; i++ {
+	for i := 0; (i < 10) && (i < len(publishedItems)); i++ {
 		urlList[i] = publishedItems[i].URI
 	}
 	log.Info(ctx, "First 10 URLs retrieved", log.Data{"first URLs": urlList})
