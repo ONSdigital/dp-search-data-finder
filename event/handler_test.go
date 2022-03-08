@@ -28,14 +28,26 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 
 		eventHandler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
 		err = eventHandler.Handle(testCtx, &testEvent)
-		So(err, ShouldBeNil)
+
+		Convey("Then no error is returned", func() {
+			So(err, ShouldBeNil)
+		})
+	})
+
+	Convey("Given an event handler containing a nil ZebedeeClient, when Handle is triggered", t, func() {
+		eventHandler := &event.ReindexRequestedHandler{ZebedeeClient: nil}
+		err := eventHandler.Handle(testCtx, &testEvent)
+
+		Convey("Then an error is returned", func() {
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "the Zebedee client in the reindex requested handler must not be nil")
+		})
 	})
 }
 
 func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 	return &dphttp.ClienterMock{
 		SetPathsWithNoRetriesFunc: func(paths []string) {
-			return
 		},
 		DoFunc: func(ctx context.Context, req *http.Request) (*http.Response, error) {
 			return r, err

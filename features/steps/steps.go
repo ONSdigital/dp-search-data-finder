@@ -21,7 +21,7 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 }
 
 func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
-	//TODO add assert
+	// TODO add assert
 
 	return c.StepError()
 }
