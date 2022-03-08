@@ -71,10 +71,10 @@ func scanEvent(scanner *bufio.Scanner) *models.ContentUpdated {
 	uri := scanner.Text()
 
 	return &models.ContentUpdated{
-		URI:      uri,
-		DataType: "legacy",
-		JobID: "",
-		TraceID:  "054435ded",
+		URI:         uri,
+		DataType:    "legacy",
+		JobID:       "",
+		TraceID:     "054435ded",
 		SearchIndex: "ONS",
 	}
 }

@@ -30,8 +30,10 @@ An example event can be created using the helper script, `make produce`.
 | KAFKA_SEC_CLIENT_KEY         | _unset_                           | PEM for the client key ([kafka TLS doc])
 | KAFKA_SEC_CLIENT_CERT        | _unset_                           | PEM for the client certificate ([kafka TLS doc])
 | KAFKA_SEC_SKIP_VERIFY        | false                             | ignores server certificate issues if `true` ([kafka TLS doc])
-| HELLO_CALLED_GROUP           | dp-search-data-finder              | The consumer group this application to consume topic messages
-| HELLO_CALLED_TOPIC           | hello-called                      | The name of the topic to consume messages from
+| REINDEX_REQUESTED_GROUP      | dp-search-data-finder             | The consumer group this application to consume topic messages
+| REINDEX_REQUESTED_TOPIC      | reindex-requested                 | The name of the topic to consume messages from
+| KAFKA_CONTENT_UPDATED_TOPIC  | content-updated                   | The name of the topic to produce messages to
+| CONTENT_UPDATED_TOPIC_FLAG   | false                             | produce events only if set to `true`
 
 [kafka TLS doc]: https://github.com/ONSdigital/dp-kafka/tree/main/examples#tls
 
@@ -43,28 +45,24 @@ An example event can be created using the helper script, `make produce`.
 
  `curl localhost:8125/health`
 
-
 ### Content Updated Topic
 
-To check if service produced an event for contentUpdatedTopic
+a. To check if service produced an event for content-updated Topic
 
   make test
 
-set ContentUpdatedTopicFlag in config as true/false
+b. set ContentUpdatedTopicFlag in config as true/false
 
-Run the service
+c. build and run the service
   go build
   ./dp-search-data-finder
 
-Send the event
+d. Send the event
   make produce
   Type uri (any text)
 
-Check the service logs if either of the following appears and there is no error in service logs   
+e. Check the service logs if either of the following appears and there is no error in service logs   
   ContentUpdatedTopic Flag is enabled/disabled
-  
-
-
 
 ### Contributing
 
