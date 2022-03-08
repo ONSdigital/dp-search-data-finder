@@ -12,26 +12,30 @@ An example event can be created using the helper script, `make produce`.
 
 * Requires running…
   * [kafka](https://github.com/ONSdigital/dp/blob/main/guides/INSTALLING.md#prerequisites)
+  * [zebedee](https://github.com/ONSdigital/zebedee)
 * No further dependencies other than those defined in `go.mod`
 
 ### Configuration
 
-| Environment variable         | Default                           | Description
-| ---------------------------- | --------------------------------- | -----------
-| BIND_ADDR                    | localhost:28000                    | The host and port to bind to
-| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                | The graceful shutdown timeout in seconds (`time.Duration` format)
-| HEALTHCHECK_INTERVAL         | 30s                               | Time between self-healthchecks (`time.Duration` format)
-| HEALTHCHECK_CRITICAL_TIMEOUT | 90s                               | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
-| KAFKA_ADDR                   | "localhost:9092"                  | The address of Kafka (accepts list)
-| KAFKA_OFFSET_OLDEST          | true                              | Start processing Kafka messages in order from the oldest in the queue
-| KAFKA_NUM_WORKERS            | 1                                 | The maximum number of parallel kafka consumers
-| KAFKA_SEC_PROTO              | _unset_                           | if set to `TLS`, kafka connections will use TLS ([kafka TLS doc])
-| KAFKA_SEC_CA_CERTS           | _unset_                           | CA cert chain for the server cert ([kafka TLS doc])
-| KAFKA_SEC_CLIENT_KEY         | _unset_                           | PEM for the client key ([kafka TLS doc])
-| KAFKA_SEC_CLIENT_CERT        | _unset_                           | PEM for the client certificate ([kafka TLS doc])
-| KAFKA_SEC_SKIP_VERIFY        | false                             | ignores server certificate issues if `true` ([kafka TLS doc])
-| HELLO_CALLED_GROUP           | dp-search-data-finder              | The consumer group this application to consume topic messages
-| HELLO_CALLED_TOPIC           | hello-called                      | The name of the topic to consume messages from
+| Environment variable          | Default                           | Description
+| ----------------------------- | --------------------------------- | -----------
+| BIND_ADDR                     | "localhost:28000"                 | The host and port to bind to
+| GRACEFUL_SHUTDOWN_TIMEOUT     | 5s                                | The graceful shutdown timeout in seconds (`time.Duration` format)
+| HEALTHCHECK_CRITICAL_TIMEOUT  | 90s                               | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
+| HEALTHCHECK_INTERVAL          | 30s                               | Time between self-healthchecks (`time.Duration` format)
+| KAFKA_ADDR                    | "localhost:9092"                  | The address of Kafka (accepts list)
+| KAFKA_CONTENT_UPDATED_TOPIC   | "content-updated"                 | The name of the topic to produce messages for
+| KAFKA_NUM_WORKERS             | 1                                 | The maximum number of parallel kafka consumers
+| KAFKA_OFFSET_OLDEST           | true                              | Start processing Kafka messages in order from the oldest in the queue
+| KAFKA_REINDEX_REQUESTED_GROUP | "dp-search-data-finder"           | The consumer group for this application to consume reindex-requested messages
+| KAFKA_REINDEX_REQUESTED_TOPIC | "reindex-requested"               | The name of the topic to consume messages from
+| KAFKA_SEC_PROTO               | _unset_                           | if set to `TLS`, kafka connections will use TLS ([kafka TLS doc])
+| KAFKA_SEC_CA_CERTS            | _unset_                           | CA cert chain for the server cert ([kafka TLS doc])
+| KAFKA_SEC_CLIENT_CERT         | _unset_                           | PEM for the client certificate ([kafka TLS doc])
+| KAFKA_SEC_CLIENT_KEY          | _unset_                           | PEM for the client key ([kafka TLS doc])
+| KAFKA_SEC_SKIP_VERIFY         | false                             | ignores server certificate issues if `true` ([kafka TLS doc])
+| KAFKA_VERSION                 | "1.0.2"                           | The kafka version that this service expects to connect to
+| ZEBEDEE_URL                   | http://localhost:8082             | The URL to zebedee
 
 [kafka TLS doc]: https://github.com/ONSdigital/dp-kafka/tree/main/examples#tls
 
@@ -41,7 +45,7 @@ An example event can be created using the helper script, `make produce`.
 
  On a development machine a request to the health check endpoint can be made by:
 
- `curl localhost:8125/health`
+ `curl localhost:28000/health`
 
 ### Contributing
 
@@ -52,4 +56,3 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details.
 Copyright © 2022, Office for National Statistics (https://www.ons.gov.uk)
 
 Released under MIT license, see [LICENSE](LICENSE.md) for details.
-
