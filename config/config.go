@@ -57,7 +57,7 @@ func Get() (*Config, error) {
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},
-		ZebedeeURL:       "http://localhost:8082",
+		ZebedeeURL: "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -2,9 +2,6 @@ package steps
 
 import (
 	"context"
-	"net/http"
-	"os"
-
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
@@ -13,6 +10,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/ONSdigital/dp-search-data-finder/service/mock"
+	"net/http"
 )
 
 type Component struct {
@@ -51,11 +49,9 @@ func NewComponent() *Component {
 }
 
 func (c *Component) Close() {
-	os.Remove(c.cfg.OutputFilePath)
 }
 
 func (c *Component) Reset() {
-	os.Remove(c.cfg.OutputFilePath)
 }
 
 func (c *Component) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
