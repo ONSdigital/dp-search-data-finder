@@ -26,7 +26,7 @@ job "dp-search-data-finder" {
       mode     = "delay"
     }
 
-    task "dp-search-data-finder-publishing" {
+    task "dp-search-data-finder" {
       driver = "docker"
 
       artifact {
@@ -69,7 +69,7 @@ job "dp-search-data-finder" {
       }
 
       vault {
-        policies = ["dp-search-data-finder-publishing"]
+        policies = ["dp-search-data-finder"]
       }
     }
   }
