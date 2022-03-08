@@ -71,7 +71,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, zebedeeClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -159,14 +159,17 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup) (err error) {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient *zebedee.Client) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for Kafka", err)
 	}
-
+	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for zebedee", err)
+	}
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
