@@ -14,9 +14,8 @@ type Config struct {
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
-	OutputFilePath             string        `envconfig:"OUTPUT_FILE_PATH"`
 	KafkaConfig                KafkaConfig
-	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -49,7 +48,6 @@ func Get() (*Config, error) {
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
-		OutputFilePath:             "/tmp/searchdatafinder.txt",
 		KafkaConfig: KafkaConfig{
 			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 			Version:               "1.0.2",
@@ -59,7 +57,7 @@ func Get() (*Config, error) {
 			ReindexRequestedTopic: "reindex-requested",
 			ContentUpdatedTopic:   "content-updated",
 		},
-		ServiceAuthToken: "",
+		ZebedeeURL:       "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)

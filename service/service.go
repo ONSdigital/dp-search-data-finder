@@ -4,7 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -20,6 +23,12 @@ type Service struct {
 	healthCheck     HealthChecker
 	consumer        kafka.IConsumerGroup
 	shutdownTimeout time.Duration
+}
+
+func newZebedeeClient(httpClient dpHTTP.Clienter, cfg *config.Config) *zebedee.Client {
+	healthClient := health.NewClientWithClienter("", cfg.ZebedeeURL, httpClient)
+	zebedeeClient := zebedee.NewWithHealthClient(healthClient)
+	return zebedeeClient
 }
 
 // Run the service
@@ -44,8 +53,11 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
+	httpClient := dpHTTP.NewClient()
+	zebedeeClient := newZebedeeClient(httpClient, cfg)
+
 	// Event Handler for Kafka Consumer
-	handler := &event.ReindexRequestedHandler{}
+	handler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
 	event.Consume(ctx, consumer, handler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
