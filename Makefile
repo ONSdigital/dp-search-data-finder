@@ -9,6 +9,10 @@ LDFLAGS = -ldflags "-X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMM
 .PHONY: all
 all: audit test build
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: audit
 audit:
 	go list -m all | nancy sleuth

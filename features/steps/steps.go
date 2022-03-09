@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
-	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/cucumber/godog"
@@ -54,16 +54,16 @@ func (c *Component) theseReindexrequestedEventsAreConsumed(table *godog.Table) e
 	return nil
 }
 
-func (c *Component) convertToReindexRequestedEvents(table *godog.Table) ([]*event.ReindexRequested, error) {
+func (c *Component) convertToReindexRequestedEvents(table *godog.Table) ([]*models.ReindexRequested, error) {
 	assist := assistdog.NewDefault()
-	events, err := assist.CreateSlice(&event.ReindexRequested{}, table)
+	events, err := assist.CreateSlice(&models.ReindexRequested{}, table)
 	if err != nil {
 		return nil, err
 	}
-	return events.([]*event.ReindexRequested), nil
+	return events.([]*models.ReindexRequested), nil
 }
 
-func (c *Component) sendToConsumer(e *event.ReindexRequested) error {
+func (c *Component) sendToConsumer(e *models.ReindexRequested) error {
 	bytes, err := schema.ReindexRequestedEvent.Marshal(e)
 	if err != nil {
 		return err

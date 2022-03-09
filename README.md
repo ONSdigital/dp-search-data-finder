@@ -20,6 +20,7 @@ An example event can be created using the helper script, `make produce`.
 | Environment variable          | Default                           | Description
 | ----------------------------- | --------------------------------- | -----------
 | BIND_ADDR                     | "localhost:28000"                 | The host and port to bind to
+| CONTENT_UPDATED_TOPIC_FLAG    | false                             | produce events only if set to `true`
 | GRACEFUL_SHUTDOWN_TIMEOUT     | 5s                                | The graceful shutdown timeout in seconds (`time.Duration` format)
 | HEALTHCHECK_CRITICAL_TIMEOUT  | 90s                               | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
 | HEALTHCHECK_INTERVAL          | 30s                               | Time between self-healthchecks (`time.Duration` format)
@@ -41,11 +42,30 @@ An example event can be created using the helper script, `make produce`.
 
 ### Healthcheck
 
- The `/health` endpoint returns the current status of the service. Dependent services are health checked on an interval defined by the `HEALTHCHECK_INTERVAL` environment variable.
+The `/health` endpoint returns the current status of the service. Dependent services are health checked on an interval defined by the `HEALTHCHECK_INTERVAL` environment variable.
 
- On a development machine a request to the health check endpoint can be made by:
+On a development machine a request to the health check endpoint can be made by:
 
- `curl localhost:28000/health`
+`curl localhost:28000/health`
+
+### Content Updated Topic
+
+a. To check if service produced an event for content-updated Topic
+
+make test
+
+b. set ContentUpdatedTopicFlag in config as true/false
+
+c. build and run the service
+go build
+./dp-search-data-finder
+
+d. Send the event
+make produce
+Type uri (any text)
+
+e. Check the service logs if either of the following appears and there is no error in service logs   
+ContentUpdatedTopic Flag is enabled/disabled
 
 ### Contributing
 

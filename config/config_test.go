@@ -29,6 +29,7 @@ func TestConfig(t *testing.T) {
 				So(cfg.KafkaConfig.ReindexRequestedGroup, ShouldEqual, "dp-search-data-finder")
 				So(cfg.KafkaConfig.ReindexRequestedTopic, ShouldEqual, "reindex-requested")
 				So(cfg.KafkaConfig.ContentUpdatedTopic, ShouldEqual, "content-updated")
+				So(cfg.ContentUpdatedTopicFlag, ShouldEqual, false)
 			})
 			Convey("Then a second call to config should return the same config", func() {
 				newCfg, newErr := Get()

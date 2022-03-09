@@ -4,12 +4,15 @@ import (
 	"github.com/ONSdigital/go-ns/avro"
 )
 
-// TODO: replace content updated structure and model with correct design
 var contentUpdatedEvent = `{
   "type": "record",
   "name": "content-updated",
   "fields": [
-    {"name": "recipient_name", "type": "string", "default": ""}
+    {"name": "uri", "type": "string", "default": ""},
+    {"name": "data_type", "type": "string", "default": ""},
+    {"name": "job_id", "type": "string", "default": ""},
+    {"name": "trace_id", "type": "string", "default": ""},
+    {"name": "search_index", "type": "string", "default": ""}
   ]
 }`
 

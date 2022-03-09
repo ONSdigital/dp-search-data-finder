@@ -6,6 +6,7 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"sync"
 )
 
@@ -19,7 +20,7 @@ var _ event.Handler = &HandlerMock{}
 //
 // 		// make and configure a mocked event.Handler
 // 		mockedHandler := &HandlerMock{
-// 			HandleFunc: func(ctx context.Context, reindexRequested *event.ReindexRequested) error {
+// 			HandleFunc: func(ctx context.Context, reindexRequested *models.ReindexRequested) error {
 // 				panic("mock out the Handle method")
 // 			},
 // 		}
@@ -30,7 +31,7 @@ var _ event.Handler = &HandlerMock{}
 // 	}
 type HandlerMock struct {
 	// HandleFunc mocks the Handle method.
-	HandleFunc func(ctx context.Context, reindexRequested *event.ReindexRequested) error
+	HandleFunc func(ctx context.Context, reindexRequested *models.ReindexRequested) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -39,20 +40,20 @@ type HandlerMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ReindexRequested is the reindexRequested argument value.
-			ReindexRequested *event.ReindexRequested
+			ReindexRequested *models.ReindexRequested
 		}
 	}
 	lockHandle sync.RWMutex
 }
 
 // Handle calls HandleFunc.
-func (mock *HandlerMock) Handle(ctx context.Context, reindexRequested *event.ReindexRequested) error {
+func (mock *HandlerMock) Handle(ctx context.Context, reindexRequested *models.ReindexRequested) error {
 	if mock.HandleFunc == nil {
 		panic("HandlerMock.HandleFunc: method is nil but Handler.Handle was just called")
 	}
 	callInfo := struct {
 		Ctx              context.Context
-		ReindexRequested *event.ReindexRequested
+		ReindexRequested *models.ReindexRequested
 	}{
 		Ctx:              ctx,
 		ReindexRequested: reindexRequested,
@@ -68,11 +69,11 @@ func (mock *HandlerMock) Handle(ctx context.Context, reindexRequested *event.Rei
 //     len(mockedHandler.HandleCalls())
 func (mock *HandlerMock) HandleCalls() []struct {
 	Ctx              context.Context
-	ReindexRequested *event.ReindexRequested
+	ReindexRequested *models.ReindexRequested
 } {
 	var calls []struct {
 		Ctx              context.Context
-		ReindexRequested *event.ReindexRequested
+		ReindexRequested *models.ReindexRequested
 	}
 	mock.lockHandle.RLock()
 	calls = mock.calls.Handle

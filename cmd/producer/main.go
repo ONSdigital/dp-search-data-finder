@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	kafka "github.com/ONSdigital/dp-kafka/v3"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-search-data-finder/config"
-	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -27,9 +27,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create Kafka Producer
+	pChannels := kafka.CreateProducerChannels()
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaConfig.Version,
 	}
+	// KafkaTLSProtocol informs service to use TLS protocol for kafka
 	if cfg.KafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
 		pConfig.SecurityConfig = kafka.GetSecurityConfig(
 			cfg.KafkaConfig.SecCACerts,
@@ -38,14 +41,15 @@ func main() {
 			cfg.KafkaConfig.SecSkipVerify,
 		)
 	}
-	kafkaProducer, err := kafka.NewProducer(ctx, pConfig)
+
+	kafkaProducer, err := kafka.NewProducer(ctx, cfg.KafkaConfig.Brokers, cfg.KafkaConfig.ContentUpdatedTopic, pChannels, pConfig)
 	if err != nil {
 		log.Fatal(ctx, "fatal error trying to create kafka producer", err, log.Data{"topic": cfg.KafkaConfig.ContentUpdatedTopic})
 		os.Exit(1)
 	}
 
 	// kafka error logging go-routines
-	kafkaProducer.LogErrors(ctx)
+	kafkaProducer.Channels().LogErrors(ctx, "kafka producer")
 
 	time.Sleep(500 * time.Millisecond)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -60,25 +64,28 @@ func main() {
 		}
 
 		// Send bytes to Output channel, after calling Initialise just in case it is not initialised.
-		err = kafkaProducer.Initialise(ctx)
-		if err != nil {
-			log.Fatal(ctx, "initialise kafka producer error", err)
-			os.Exit(1)
+		if err := kafkaProducer.Initialise(ctx); err != nil {
+			log.Warn(ctx, "failed to initialise kafka producer")
+			return
 		}
 		kafkaProducer.Channels().Output <- bytes
 	}
 }
 
 // scanEvent creates a ContentUpdated event according to the user input
-func scanEvent(scanner *bufio.Scanner) *event.ContentUpdated {
+func scanEvent(scanner *bufio.Scanner) *models.ContentUpdated {
 	fmt.Println("--- [Send Kafka ContentUpdated] ---")
 
-	fmt.Println("Please type the recipient name")
+	fmt.Println("Please type the URI like /help")
 	fmt.Printf("$ ")
 	scanner.Scan()
-	name := scanner.Text()
+	uri := scanner.Text()
 
-	return &event.ContentUpdated{
-		RecipientName: name,
+	return &models.ContentUpdated{
+		URI:         uri,
+		DataType:    "legacy",
+		JobID:       "",
+		TraceID:     "054435ded",
+		SearchIndex: "ONS",
 	}
 }

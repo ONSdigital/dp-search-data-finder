@@ -1,9 +1,12 @@
-package event
+package models
 
 // ContentUpdated provides an avro structure for a Content Updated event
-// TODO: Add the correct fields to the ContentUpdated struct
 type ContentUpdated struct {
-	RecipientName string `avro:"recipient_name"`
+	URI         string `avro:"uri"`
+	DataType    string `avro:"data_type"`
+	JobID       string `avro:"job_id"`
+	TraceID     string `avro:"trace_id"`
+	SearchIndex string `avro:"search_index"`
 }
 
 // ReindexRequested provides an avro structure for a Reindex Requested event
