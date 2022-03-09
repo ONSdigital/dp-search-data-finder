@@ -4,6 +4,7 @@ import (
 	"context"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
@@ -56,6 +57,7 @@ func processMessage(ctx context.Context, message kafka.Message, handler Handler)
 	}
 
 	log.Info(ctx, "event received", log.Data{"event": event})
+	ctx = dprequest.WithRequestId(ctx, event.TraceID)
 
 	// handle - commit on failure (implement error handling to not commit if message needs to be consumed again)
 	err = handler.Handle(ctx, event)
