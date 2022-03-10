@@ -6,6 +6,7 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"net/http"
@@ -16,9 +17,10 @@ var (
 	lockInitialiserMockDoGetHTTPServer    sync.RWMutex
 	lockInitialiserMockDoGetHealthCheck   sync.RWMutex
 	lockInitialiserMockDoGetKafkaConsumer sync.RWMutex
+	lockInitialiserMockDoGetZebedeeClient sync.RWMutex
 )
 
-// Ensure, that InitialiserMock does implement service.Initialiser.
+// Ensure, that InitialiserMock does implement Initialiser.
 // If this is not the case, regenerate this file with moq.
 var _ service.Initialiser = &InitialiserMock{}
 
@@ -37,6 +39,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //             DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 // 	               panic("mock out the DoGetKafkaConsumer method")
 //             },
+//             DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
+// 	               panic("mock out the DoGetZebedeeClient method")
+//             },
 //         }
 //
 //         // use mockedInitialiser in code that requires service.Initialiser
@@ -52,6 +57,9 @@ type InitialiserMock struct {
 
 	// DoGetKafkaConsumerFunc mocks the DoGetKafkaConsumer method.
 	DoGetKafkaConsumerFunc func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
+
+	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
+	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -77,8 +85,13 @@ type InitialiserMock struct {
 		DoGetKafkaConsumer []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// KafkaCfg is the kafkaCfg argument value.
+			KafkaCfg *config.KafkaConfig
+		}
+		// DoGetZebedeeClient holds details about calls to the DoGetZebedeeClient method.
+		DoGetZebedeeClient []struct {
 			// Cfg is the cfg argument value.
-			Cfg *config.KafkaConfig
+			Cfg *config.Config
 		}
 	}
 }
@@ -167,11 +180,11 @@ func (mock *InitialiserMock) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *c
 		panic("InitialiserMock.DoGetKafkaConsumerFunc: method is nil but Initialiser.DoGetKafkaConsumer was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		Cfg *config.KafkaConfig
+		Ctx      context.Context
+		KafkaCfg *config.KafkaConfig
 	}{
-		Ctx: ctx,
-		Cfg: kafkaCfg,
+		Ctx:      ctx,
+		KafkaCfg: kafkaCfg,
 	}
 	lockInitialiserMockDoGetKafkaConsumer.Lock()
 	mock.calls.DoGetKafkaConsumer = append(mock.calls.DoGetKafkaConsumer, callInfo)
@@ -183,15 +196,46 @@ func (mock *InitialiserMock) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *c
 // Check the length with:
 //     len(mockedInitialiser.DoGetKafkaConsumerCalls())
 func (mock *InitialiserMock) DoGetKafkaConsumerCalls() []struct {
-	Ctx context.Context
-	Cfg *config.KafkaConfig
+	Ctx      context.Context
+	KafkaCfg *config.KafkaConfig
 } {
 	var calls []struct {
-		Ctx context.Context
-		Cfg *config.KafkaConfig
+		Ctx      context.Context
+		KafkaCfg *config.KafkaConfig
 	}
 	lockInitialiserMockDoGetKafkaConsumer.RLock()
 	calls = mock.calls.DoGetKafkaConsumer
 	lockInitialiserMockDoGetKafkaConsumer.RUnlock()
+	return calls
+}
+
+// DoGetZebedeeClient calls DoGetZebedeeClientFunc.
+func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
+	if mock.DoGetZebedeeClientFunc == nil {
+		panic("InitialiserMock.DoGetZebedeeClientFunc: method is nil but Initialiser.DoGetZebedeeClient was just called")
+	}
+	callInfo := struct {
+		Cfg *config.Config
+	}{
+		Cfg: cfg,
+	}
+	lockInitialiserMockDoGetZebedeeClient.Lock()
+	mock.calls.DoGetZebedeeClient = append(mock.calls.DoGetZebedeeClient, callInfo)
+	lockInitialiserMockDoGetZebedeeClient.Unlock()
+	return mock.DoGetZebedeeClientFunc(cfg)
+}
+
+// DoGetZebedeeClientCalls gets all the calls that were made to DoGetZebedeeClient.
+// Check the length with:
+//     len(mockedInitialiser.DoGetZebedeeClientCalls())
+func (mock *InitialiserMock) DoGetZebedeeClientCalls() []struct {
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Cfg *config.Config
+	}
+	lockInitialiserMockDoGetZebedeeClient.RLock()
+	calls = mock.calls.DoGetZebedeeClient
+	lockInitialiserMockDoGetZebedeeClient.RUnlock()
 	return calls
 }

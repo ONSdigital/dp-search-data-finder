@@ -37,7 +37,7 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 		httpClient := newMockHTTPClient(response, nil)
 		zebedeeClient := newZebedeeClient(httpClient)
 
-		eventHandler := &handler.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeClient}
 		err = eventHandler.Handle(testCtx, &testEvent)
 
 		Convey("Then no error is returned", func() {
@@ -46,7 +46,7 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 	})
 
 	Convey("Given an event handler containing a nil ZebedeeClient, when Handle is triggered", t, func() {
-		eventHandler := &handler.ReindexRequestedHandler{ZebedeeClient: nil}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: nil}
 		err := eventHandler.Handle(testCtx, &testEvent)
 
 		Convey("Then an error is returned", func() {
