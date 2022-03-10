@@ -54,6 +54,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	}
 
 	httpClient := dpHTTP.NewClient()
+	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
 	zebedeeClient := newZebedeeClient(httpClient, cfg)
 
 	// Event Handler for Kafka Consumer

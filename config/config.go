@@ -16,7 +16,8 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	KafkaConfig                KafkaConfig
-	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
+	ZebedeeClientTimeout       time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
+	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -64,7 +65,8 @@ func Get() (*Config, error) {
 			SecSkipVerify:         false,
 			Version:               "1.0.2",
 		},
-		ZebedeeURL: "http://localhost:8082",
+		ZebedeeClientTimeout: 30 * time.Second,
+		ZebedeeURL:           "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)
