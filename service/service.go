@@ -10,6 +10,7 @@ import (
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -57,8 +58,8 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	zebedeeClient := newZebedeeClient(httpClient, cfg)
 
 	// Event Handler for Kafka Consumer
-	handler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
-	event.Consume(ctx, consumer, handler, cfg)
+	eventhandler := &handler.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
+	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
 		return nil, consumerStartErr
