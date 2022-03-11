@@ -57,7 +57,7 @@ func processMessage(ctx context.Context, message kafka.Message, handler Handler)
 	}
 
 	ctx = dprequest.WithRequestId(ctx, event.TraceID)
-	log.Info(ctx, "event received to be added into the batch", log.Data{"traceid": event.TraceID})
+	log.Info(ctx, "event received", log.Data{"event": event})
 
 	// handle - commit on failure (implement error handling to not commit if message needs to be consumed again)
 	err = handler.Handle(ctx, event)
