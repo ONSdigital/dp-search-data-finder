@@ -26,7 +26,7 @@ var (
 		return zebedeeclient.PublishedIndex{}, errZebedee
 	}
 
-	getPublishedIndexFunc             = func(ctx context.Context, publishedIndexRequestParams *zebedeeclient.PublishedIndexRequestParams) (zebedeeclient.PublishedIndex, error) {
+	getPublishedIndexFunc = func(ctx context.Context, publishedIndexRequestParams *zebedeeclient.PublishedIndexRequestParams) (zebedeeclient.PublishedIndex, error) {
 		return zebedeeclient.PublishedIndex{}, nil
 	}
 )
