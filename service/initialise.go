@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 )
 
@@ -15,6 +17,7 @@ type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaConsumer bool
 	Init          Initialiser
+	ZebedeeCli    bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -23,6 +26,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 		HealthCheck:   false,
 		KafkaConsumer: false,
 		Init:          initialiser,
+		ZebedeeCli:    false,
 	}
 }
 
@@ -60,6 +64,19 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
 	return s
+}
+
+// GetZebedee return zebedee client
+func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClient {
+	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
+	e.ZebedeeCli = true
+	return zebedeeClient
+}
+
+// DoGetZebedeeClient gets and initialises the Zebedee Client
+func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
+	zebedeeClient := zebedee.New(cfg.ZebedeeURL)
+	return zebedeeClient
 }
 
 // DoGetKafkaConsumer returns a Kafka Consumer group

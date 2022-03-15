@@ -4,12 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/health"
-	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -23,12 +22,6 @@ type Service struct {
 	healthCheck     HealthChecker
 	consumer        kafka.IConsumerGroup
 	shutdownTimeout time.Duration
-}
-
-func newZebedeeClient(httpClient dpHTTP.Clienter, cfg *config.Config) *zebedee.Client {
-	healthClient := health.NewClientWithClienter("", cfg.ZebedeeURL, httpClient)
-	zebedeeClient := zebedee.NewWithHealthClient(healthClient)
-	return zebedeeClient
 }
 
 // Run the service
@@ -46,6 +39,9 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
+	// Get the zebedee client
+	zebedeeClient := serviceList.GetZebedee(cfg)
+
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
 	if err != nil {
@@ -53,13 +49,11 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	httpClient := dpHTTP.NewClient()
-	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
-	zebedeeClient := newZebedeeClient(httpClient, cfg)
-
 	// Event Handler for Kafka Consumer
-	handler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
-	event.Consume(ctx, consumer, handler, cfg)
+	eventhandler := &handler.ReindexRequestedHandler{
+		ZebedeeCli: zebedeeClient}
+
+	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
 		return nil, consumerStartErr
@@ -160,7 +154,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient *zebedee.Client) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {

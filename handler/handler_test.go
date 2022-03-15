@@ -1,4 +1,4 @@
-package event_test
+package handler_test
 
 import (
 	"context"
@@ -10,15 +10,26 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-mocking/httpmocks"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
-	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	. "github.com/smartystreets/goconvey/convey"
+)
+
+var (
+	testCtx = context.Background()
+
+	testEvent = models.ReindexRequested{
+		JobID:       "job id",
+		SearchIndex: "search index",
+		TraceID:     "trace id",
+	}
 )
 
 const testHost = "http://localhost:8080"
 
 func TestReindexRequestedHandler_Handle(t *testing.T) {
 	Convey("Given a successful event handler, when Handle is triggered", t, func() {
-		documentContent, err := os.ReadFile("./mock/publishedindex.json")
+		documentContent, err := os.ReadFile("./publishedindex.json")
 		So(err, ShouldBeNil)
 		body := httpmocks.NewReadCloserMock(documentContent, nil)
 		response := httpmocks.NewResponseMock(body, http.StatusOK)
@@ -26,7 +37,7 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 		httpClient := newMockHTTPClient(response, nil)
 		zebedeeClient := newZebedeeClient(httpClient)
 
-		eventHandler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeClient}
 		err = eventHandler.Handle(testCtx, &testEvent)
 
 		Convey("Then no error is returned", func() {
@@ -35,7 +46,7 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 	})
 
 	Convey("Given an event handler containing a nil ZebedeeClient, when Handle is triggered", t, func() {
-		eventHandler := &event.ReindexRequestedHandler{ZebedeeClient: nil}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: nil}
 		err := eventHandler.Handle(testCtx, &testEvent)
 
 		Convey("Then an error is returned", func() {

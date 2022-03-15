@@ -10,6 +10,8 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
+	clientMock "github.com/ONSdigital/dp-search-data-finder/clients/mock"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	serviceMock "github.com/ONSdigital/dp-search-data-finder/service/mock"
@@ -62,6 +64,10 @@ func TestRun(t *testing.T) {
 			},
 		}
 
+		zebedeeMock := &clientMock.ZebedeeClientMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
+
 		funcDoGetKafkaConsumerOk := func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 			return consumerMock, nil
 		}
@@ -74,10 +80,15 @@ func TestRun(t *testing.T) {
 			return serverMock
 		}
 
+		funcDoGetZebedeeOk := func(cfg *config.Config) clients.ZebedeeClient {
+			return zebedeeMock
+		}
+
 		Convey("Given that initialising Kafka consumer returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerErr,
+				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -87,6 +98,7 @@ func TestRun(t *testing.T) {
 				So(err, ShouldResemble, errKafkaConsumer)
 				So(svcList.KafkaConsumer, ShouldBeFalse)
 				So(svcList.HealthCheck, ShouldBeFalse)
+				So(svcList.ZebedeeCli, ShouldBeTrue)
 			})
 		})
 
@@ -95,6 +107,7 @@ func TestRun(t *testing.T) {
 				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
 				DoGetHealthCheckFunc:   funcDoGetHealthcheckErr,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
+				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -104,6 +117,7 @@ func TestRun(t *testing.T) {
 				So(err, ShouldResemble, errHealthcheck)
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeFalse)
+				So(svcList.ZebedeeCli, ShouldBeTrue)
 			})
 		})
 
@@ -112,6 +126,7 @@ func TestRun(t *testing.T) {
 				DoGetHTTPServerFunc:    funcDoGetHTTPServer,
 				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
+				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -122,6 +137,7 @@ func TestRun(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
+				So(svcList.ZebedeeCli, ShouldBeTrue)
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
@@ -149,6 +165,7 @@ func TestRun(t *testing.T) {
 					return hcMockAddFail, nil
 				},
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
+				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -159,6 +176,7 @@ func TestRun(t *testing.T) {
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(svcList.KafkaConsumer, ShouldBeTrue)
+				So(svcList.ZebedeeCli, ShouldBeTrue)
 				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 2)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMockAddFail.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
@@ -197,6 +215,10 @@ func TestClose(t *testing.T) {
 			},
 		}
 
+		zebedeeMock := &clientMock.ZebedeeClientMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
+
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
@@ -206,6 +228,7 @@ func TestClose(t *testing.T) {
 				DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 					return consumerMock, nil
 				},
+				DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
 			}
 
 			svcErrors := make(chan error, 1)
@@ -236,6 +259,7 @@ func TestClose(t *testing.T) {
 				DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 					return consumerMock, nil
 				},
+				DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
 			}
 
 			svcErrors := make(chan error, 1)
