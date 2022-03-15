@@ -41,6 +41,9 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg)
+	if zebedeeClient == nil {
+		log.Fatal(ctx, "++++++++++++zebedeeClient nil", errors.New("test error"))
+	}
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
