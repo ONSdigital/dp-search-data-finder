@@ -32,6 +32,7 @@ var (
 )
 
 func TestReindexRequestedHandler_Handle(t *testing.T) {
+	t.Parallel()
 	Convey("Given an event handler working successfully, and an event containing a URI", t, func() {
 		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
 		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock}
