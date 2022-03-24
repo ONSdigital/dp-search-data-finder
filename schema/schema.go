@@ -5,19 +5,19 @@ import (
 )
 
 var contentPublished = `{
-  "type": "record",
-  "name": "content-updated",
-  "fields": [
-    {"name": "uri", "type": "string", "default": ""},
-    {"name": "data_type", "type": "string", "default": ""},
-    {"name": "collection_id", "type": "string", "default": ""},
-    {"name": "job_id", "type": "string", "default": ""},
-    {"name": "search_index", "type": "string", "default": ""},
-    {"name": "trace_id", "type": "string", "default": ""}
-  ]
-}`
+	"type": "record",
+	"name": "content-published",
+	"fields": [
+	  {"name": "uri", "type": "string", "default": ""},
+	  {"name": "data_type", "type": "string", "default": ""},
+	  {"name": "collection_id", "type": "string", "default": ""},
+	  {"name": "job_id", "type": "string", "default": ""},
+	  {"name": "search_index", "type": "string", "default": ""},
+	  {"name": "trace_id", "type": "string", "default": ""}
+	]
+  }`
 
-// ContentUpdatedEvent is the Avro schema for Content Updated messages.
+// ContentPublishedEvent is the Avro schema for Content Updated messages.
 var ContentPublishedEvent = &avro.Schema{
 	Definition: contentPublished,
 }
