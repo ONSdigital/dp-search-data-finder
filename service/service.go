@@ -50,9 +50,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	}
 
 	// Event Handler for Kafka Consumer
-	eventhandler := &handler.ReindexRequestedHandler{
-		ZebedeeCli: zebedeeClient}
-
+	eventhandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeClient}
 	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)

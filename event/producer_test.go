@@ -49,7 +49,7 @@ func TestProducer_ContentUpdated(t *testing.T) {
 
 		marshallerMock := &mock.MarshallerMock{
 			MarshalFunc: func(s interface{}) ([]byte, error) {
-				return schema.ContentUpdatedEvent.Marshal(s)
+				return schema.ContentPublishedEvent.Marshal(s)
 			},
 		}
 
@@ -75,7 +75,7 @@ func TestProducer_ContentUpdated(t *testing.T) {
 
 			Convey("Then the expected bytes are sent to producer.output", func() {
 				var actual models.ContentUpdated
-				err = schema.ContentUpdatedEvent.Unmarshal(avroBytes, &actual)
+				err = schema.ContentPublishedEvent.Unmarshal(avroBytes, &actual)
 				So(err, ShouldBeNil)
 				So(expectedContentUpdatedEvent, ShouldResemble, actual)
 			})

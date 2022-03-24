@@ -36,6 +36,19 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 		urlList[i] = publishedItems[i].URI
 	}
 	log.Info(ctx, "first 10 URLs retrieved", log.Data{"first URLs": urlList})
+
+	//TODO : obtain jobid from the request
+	jobid := event.JobID
+	log.Info(ctx, "+++++++++++jobid", log.Data{"jobId": jobid})
+
+	//TODO : Request needs to be authenticated
+
+	//TODO : Create task for a given reindex job - POST /job/<jobid>/task
+
+	//TODO : Register new health checker against Search Reindex API
+
+	//TODO :
+
 	log.Info(ctx, "event successfully handled", logData)
 
 	return nil

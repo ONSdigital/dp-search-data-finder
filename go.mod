@@ -11,7 +11,6 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v2 v2.4.4
 	github.com/ONSdigital/dp-kafka/v3 v3.3.1
-	github.com/ONSdigital/dp-mocking v0.0.0-20190905163309-fee2702ad1b9
 	github.com/ONSdigital/dp-net/v2 v2.0.0
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.1.0
@@ -27,7 +26,6 @@ require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.2.0 // indirect
 	github.com/ONSdigital/dp-net v1.2.0 // indirect
-	github.com/ONSdigital/log.go v1.1.0 // indirect
 	github.com/Shopify/sarama v1.30.1 // indirect
 	github.com/chromedp/cdproto v0.0.0-20211126220118-81fa0469ad77 // indirect
 	github.com/chromedp/chromedp v0.7.6 // indirect
