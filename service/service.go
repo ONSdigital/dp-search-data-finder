@@ -5,6 +5,7 @@ import (
 	"time"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"

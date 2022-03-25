@@ -78,7 +78,7 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 }
 
 // GetSearchReindex returns search reindex client
-func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) clients.ZebedeeClient {
+func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
 	searchReindexClient := e.Init.DoGetSearchReindexClient(cfg, httpClient)
 	e.SearchReindexCli = true
 	return searchReindexClient
