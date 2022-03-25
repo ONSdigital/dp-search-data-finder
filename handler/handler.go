@@ -5,7 +5,7 @@ import (
 
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/models"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/models"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
 )
@@ -44,7 +44,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
         return errors.New("the search reindex client in the reindex requested handler must not be nil")
     }
 
-    searchReindexJob, err := h.SearchReindexCli.PostJob(ctx, null)
+    searchReindexJob, err := h.SearchReindexCli.PostJob(ctx, searchReindex.Headers{})
     if err != nil {
         return err
     }
