@@ -26,6 +26,7 @@ require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.2.0 // indirect
 	github.com/ONSdigital/dp-net v1.2.0 // indirect
+	github.com/ONSdigital/dp-search-reindex-api v0.15.0 // indirect
 	github.com/Shopify/sarama v1.30.1 // indirect
 	github.com/chromedp/cdproto v0.0.0-20211126220118-81fa0469ad77 // indirect
 	github.com/chromedp/chromedp v0.7.6 // indirect

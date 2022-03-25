@@ -42,6 +42,10 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg)
 
+	// Get the search reindex client
+	httpClient := dpHTTP.NewClient()
+	searchReindexClient := serviceList.GetSearchReindex(cfg, httpClient)
+
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
 	if err != nil {
@@ -51,7 +55,8 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		ZebedeeCli: zebedeeClient}
+		ZebedeeCli:       zebedeeClient,
+		SearchReindexCli: searchReindexClient}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {

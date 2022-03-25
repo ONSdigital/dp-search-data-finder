@@ -5,13 +5,15 @@ import (
 
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/models"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
 )
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
 type ReindexRequestedHandler struct {
-	ZebedeeCli clients.ZebedeeClient
+	ZebedeeCli       clients.ZebedeeClient
+	SearchReindexCli clients.SearchReindexClient
 }
 
 // Handle takes a single event.
@@ -37,6 +39,21 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	}
 	log.Info(ctx, "first 10 URLs retrieved", log.Data{"first URLs": urlList})
 	log.Info(ctx, "event successfully handled", logData)
+
+    if h.SearchReindexCli == nil {
+        return errors.New("the search reindex client in the reindex requested handler must not be nil")
+    }
+
+    searchReindexJob, err := h.SearchReindexCli.PostJob(ctx, null)
+    if err != nil {
+        return err
+    }
+
+    logJob := log.Data{
+        "new job": searchReindexJob,
+    }
+
+    log.Info(ctx, "new job created", logJob)
 
 	return nil
 }
