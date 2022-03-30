@@ -17,6 +17,7 @@ import (
 	serviceMock "github.com/ONSdigital/dp-search-data-finder/service/mock"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
 var (
@@ -88,7 +89,7 @@ func TestRun(t *testing.T) {
 			return zebedeeMock
 		}
 
-		funcDoGetSearchReindexOk := func(cfg *config.Config) clients.SearchReindexClient {
+		funcDoGetSearchReindexOk := func(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
 			return searchReindexApiMock
 		}
 		
