@@ -9,7 +9,8 @@ import (
 	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 )
 
-//go:generate moq -out mock/clients.go -pkg mock . ZebedeeClient
+//go:generate moq -out mock/mockZebedeeClient.go -pkg mock . ZebedeeClient
+//go:generate moq -out mock/mockSearchReindexClient.go -pkg mock . SearchReindexClient
 
 // ZebedeeClient defines the zebedee client
 type ZebedeeClient interface {
@@ -21,4 +22,5 @@ type ZebedeeClient interface {
 type SearchReindexClient interface {
 	Checker(context.Context, *healthcheck.CheckState) error
 	PostJob(context.Context, searchReindexSDK.Headers) (searchReindex.Job, error)
+	PatchJob(context.Context, searchReindexSDK.Headers, string, searchReindexSDK.PatchOpsList) error
 }

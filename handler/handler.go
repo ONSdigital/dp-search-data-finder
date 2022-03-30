@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dp-search-data-finder/clients"
+	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -14,6 +15,7 @@ import (
 type ReindexRequestedHandler struct {
 	ZebedeeCli       clients.ZebedeeClient
 	SearchReindexCli clients.SearchReindexClient
+	Config           config.Config
 }
 
 // Handle takes a single event.
@@ -34,26 +36,50 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 
 	urlList := make([]string, 10)
 	publishedItems := publishedIndex.Items
-	for i := 0; (i < 10) && (i < len(publishedItems)); i++ {
+	totalZebedeeDocs := len(publishedItems)
+	for i := 0; (i < 10) && (i < totalZebedeeDocs); i++ {
 		urlList[i] = publishedItems[i].URI
 	}
 	log.Info(ctx, "first 10 URLs retrieved", log.Data{"first URLs": urlList})
 	log.Info(ctx, "event successfully handled", logData)
 
-    if h.SearchReindexCli == nil {
-        return errors.New("the search reindex client in the reindex requested handler must not be nil")
-    }
+	if h.SearchReindexCli == nil {
+		return errors.New("the search reindex client in the reindex requested handler must not be nil")
+	}
 
-    searchReindexJob, err := h.SearchReindexCli.PostJob(ctx, searchReindex.Headers{})
-    if err != nil {
-        return err
-    }
+	headers := searchReindex.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: h.Config.ServiceAuthToken,
+	}
 
-    logJob := log.Data{
-        "new job": searchReindexJob,
-    }
+	patchList := make([]searchReindex.PatchOperation, 2)
+	statusOperation := searchReindex.PatchOperation{
+		Op:    "replace",
+		Path:  "/state",
+		Value: "in-progress",
+	}
+	patchList[0] = statusOperation
+	totalDocsOperation := searchReindex.PatchOperation{
+		Op:    "replace",
+		Path:  "/total_search_documents",
+		Value: totalZebedeeDocs,
+	}
+	patchList[1] = totalDocsOperation
 
-    log.Info(ctx, "new job created", logJob)
+	patchOpsList := searchReindex.PatchOpsList{
+		PatchList: patchList,
+	}
+
+	logPatchList := log.Data{
+		"patch list": patchOpsList,
+	}
+
+	log.Info(ctx, "patch list for request", logPatchList)
+
+	err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchOpsList)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

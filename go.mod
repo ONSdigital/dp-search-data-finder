@@ -15,6 +15,7 @@ require (
 	github.com/ONSdigital/dp-kafka/v2 v2.5.0
 	github.com/ONSdigital/dp-kafka/v3 v3.3.1
 	github.com/ONSdigital/dp-net/v2 v2.1.0
+	github.com/ONSdigital/dp-search-reindex-api v0.15.0
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.4
@@ -27,12 +28,8 @@ require (
 
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
-	github.com/ONSdigital/dp-authorisation v0.2.0 // indirect
-	github.com/ONSdigital/dp-mongodb v1.8.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.3.0 // indirect
 	github.com/ONSdigital/dp-net v1.4.1 // indirect
-	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
-	github.com/ONSdigital/dp-search-reindex-api v0.15.0 // indirect
 	github.com/Shopify/sarama v1.32.0 // indirect
 	github.com/aws/aws-sdk-go v1.43.22 // indirect
 	github.com/chromedp/cdproto v0.0.0-20220321060548-7bc2623472b3 // indirect
@@ -76,11 +73,9 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/square/mongo-lock v0.0.0-20191001051310-282c90e422d0 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
