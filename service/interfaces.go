@@ -8,6 +8,7 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
@@ -20,6 +21,7 @@ type Initialiser interface {
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 	DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient
+	DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient
 }
 
 // HTTPServer defines the required methods from the HTTP server

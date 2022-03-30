@@ -68,6 +68,10 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
+		searchReindexApiMock := &clientMock.SearchReindexClientMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
+
 		funcDoGetKafkaConsumerOk := func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 			return consumerMock, nil
 		}
@@ -84,11 +88,16 @@ func TestRun(t *testing.T) {
 			return zebedeeMock
 		}
 
+		funcDoGetSearchReindexOk := func(cfg *config.Config) clients.SearchReindexClient {
+			return searchReindexApiMock
+		}
+		
 		Convey("Given that initialising Kafka consumer returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerErr,
 				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
+				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -108,6 +117,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc:   funcDoGetHealthcheckErr,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
 				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
+				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -118,6 +128,7 @@ func TestRun(t *testing.T) {
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeFalse)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
+				So(svcList.SearchReindexApiCli, ShouldBeTrue)
 			})
 		})
 
@@ -127,6 +138,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
 				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
+				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -138,12 +150,14 @@ func TestRun(t *testing.T) {
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
+				So(svcList.SearchReindexApiCli, ShouldBeTrue)
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
 				So(len(hcMock.AddCheckCalls()), ShouldEqual, 2)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
+				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "SearchReindexApi")
 				So(len(initMock.DoGetHTTPServerCalls()), ShouldEqual, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:28000")
 				So(len(hcMock.StartCalls()), ShouldEqual, 1)
@@ -166,6 +180,7 @@ func TestRun(t *testing.T) {
 				},
 				DoGetKafkaConsumerFunc: funcDoGetKafkaConsumerOk,
 				DoGetZebedeeClientFunc: funcDoGetZebedeeOk,
+				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -177,6 +192,7 @@ func TestRun(t *testing.T) {
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
+				So(svcList.SearchReindexApiCli, ShouldBeTrue)
 				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 2)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMockAddFail.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")

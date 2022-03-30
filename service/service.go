@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
 // Service contains all the configs, server and clients to run the event handler service
@@ -42,6 +43,10 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg)
 
+	// Get the searchReindexApi client
+	httpClient := dphttp.NewClient()
+	searchreindexClient := serviceList.GetSearchReindexApi(cfg, httpClient)
+
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
 	if err != nil {
@@ -64,7 +69,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, zebedeeClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, zebedeeClient, searchreindexClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -152,7 +157,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient, searchreindexClient clients.SearchReindexClient) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
@@ -160,6 +165,10 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 		log.Error(ctx, "error adding check for Kafka", err)
 	}
 	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for zebedee", err)
+	}
+	if err := hc.AddCheck("SearchReindexApi", searchreindexClient.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for zebedee", err)
 	}

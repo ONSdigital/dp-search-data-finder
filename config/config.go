@@ -17,6 +17,8 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	KafkaConfig                KafkaConfig
 	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
+	SearchReindexURL           string `envconfig:"SEARCHREINDEX_API_URL"`
+	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -65,6 +67,8 @@ func Get() (*Config, error) {
 			Version:               "1.0.2",
 		},
 		ZebedeeURL: "http://localhost:8082",
+		SearchReindexURL: `http://localhost:25700`,
+		ServiceAuthToken: "",
 	}
 
 	return cfg, envconfig.Process("", cfg)
