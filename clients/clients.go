@@ -22,5 +22,5 @@ type ZebedeeClient interface {
 type SearchReindexClient interface {
 	Checker(context.Context, *healthcheck.CheckState) error
 	PostJob(context.Context, searchReindexSDK.Headers) (searchReindex.Job, error)
-	PatchJob(context.Context, searchReindexSDK.Headers, string, searchReindexSDK.PatchOpsList) error
+	PatchJob(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (string, error)
 }

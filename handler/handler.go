@@ -41,7 +41,6 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 		urlList[i] = publishedItems[i].URI
 	}
 	log.Info(ctx, "first 10 URLs retrieved", log.Data{"first URLs": urlList})
-	log.Info(ctx, "event successfully handled", logData)
 
 	if h.SearchReindexCli == nil {
 		return errors.New("the search reindex client in the reindex requested handler must not be nil")
@@ -66,20 +65,17 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	}
 	patchList[1] = totalDocsOperation
 
-	patchOpsList := searchReindex.PatchOpsList{
-		PatchList: patchList,
-	}
-
 	logPatchList := log.Data{
-		"patch list": patchOpsList,
+		"patch list": patchList,
 	}
 
 	log.Info(ctx, "patch list for request", logPatchList)
 
-	err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchOpsList)
+	_, err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchList)
 	if err != nil {
 		return err
 	}
 
+    log.Info(ctx, "event successfully handled", logData)
 	return nil
 }
