@@ -5,6 +5,7 @@ import (
 	"time"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
@@ -12,7 +13,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
 // Service contains all the configs, server and clients to run the event handler service
@@ -45,6 +45,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 
 	// Get the searchReindexApi client
 	httpClient := dphttp.NewClient()
+	// httpClient := dpsearchreindex.NewClientWithClienter(cfg.ServiceAuthToken, )
 	searchreindexClient := serviceList.GetSearchReindexApi(cfg, httpClient)
 
 	// Get Kafka consumer
@@ -55,7 +56,10 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	}
 
 	// Event Handler for Kafka Consumer
-	eventhandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeClient}
+	eventhandler := &handler.ReindexRequestedHandler{
+		ZebedeeCli:       zebedeeClient,
+		SearchReindexCli: searchreindexClient,
+	}
 	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
