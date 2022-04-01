@@ -16,15 +16,17 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var testCtx = context.Background()
+var (
+	testCtx = context.Background()
 
-var errHandler = errors.New("handler error")
+	errHandler = errors.New("handler error")
 
-var testEvent = models.ReindexRequested{
-	JobID:       "job id",
-	SearchIndex: "search index",
-	TraceID:     "trace id",
-}
+	testEvent = models.ReindexRequested{
+		JobID:       "job id",
+		SearchIndex: "search index",
+		TraceID:     "trace id",
+	}
+)
 
 // kafkaStubConsumer mock which exposes Channels function returning empty channels
 // to be used on tests that are not supposed to receive any kafka message

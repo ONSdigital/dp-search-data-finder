@@ -19,6 +19,7 @@ type Config struct {
 	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
 	SearchReindexURL           string `envconfig:"SEARCHREINDEX_API_URL"`
 	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	ZebedeeClientTimeout       time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -69,6 +70,7 @@ func Get() (*Config, error) {
 		ZebedeeURL: "http://localhost:8082",
 		SearchReindexURL: `http://localhost:25700`,
 		ServiceAuthToken: "",
+		ZebedeeClientTimeout: 30 * time.Second,
 	}
 
 	return cfg, envconfig.Process("", cfg)

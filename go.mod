@@ -15,7 +15,7 @@ require (
 	github.com/ONSdigital/dp-kafka/v3 v3.3.1
 	github.com/ONSdigital/dp-net v1.4.1
 	github.com/ONSdigital/dp-net/v2 v2.1.0
-	github.com/ONSdigital/dp-search-reindex-api v0.16.0
+	github.com/ONSdigital/dp-search-reindex-api v0.0.0-00010101000000-000000000000
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.4
