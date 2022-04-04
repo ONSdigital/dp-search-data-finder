@@ -71,10 +71,12 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 
 	log.Info(ctx, "patch list for request", logPatchList)
 
-	_, err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchList)
+    var respETag string
+	respETag, err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchList)
 	if err != nil {
 		return err
 	}
+    log.Info(ctx, "eTag returned in response:" + respETag)
 
     log.Info(ctx, "event successfully handled", logData)
 	return nil
