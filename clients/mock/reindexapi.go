@@ -30,7 +30,7 @@ var _ clients.SearchReindexClient = &SearchReindexClientMock{}
 //             CheckerFunc: func(in1 context.Context, in2 *healthcheck.CheckState) error {
 // 	               panic("mock out the Checker method")
 //             },
-//             PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string) (models.Task, error) {
+//             PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error) {
 // 	               panic("mock out the PostTasksCount method")
 //             },
 //         }
@@ -44,7 +44,7 @@ type SearchReindexClientMock struct {
 	CheckerFunc func(in1 context.Context, in2 *healthcheck.CheckState) error
 
 	// PostTasksCountFunc mocks the PostTasksCount method.
-	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string) (models.Task, error)
+	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -63,6 +63,8 @@ type SearchReindexClientMock struct {
 			Headers sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
+			// Payload is the payload argument value.
+			Payload []byte
 		}
 	}
 }
@@ -103,7 +105,7 @@ func (mock *SearchReindexClientMock) CheckerCalls() []struct {
 }
 
 // PostTasksCount calls PostTasksCountFunc.
-func (mock *SearchReindexClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string) (models.Task, error) {
+func (mock *SearchReindexClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error) {
 	if mock.PostTasksCountFunc == nil {
 		panic("SearchReindexClientMock.PostTasksCountFunc: method is nil but SearchReindexClient.PostTasksCount was just called")
 	}
@@ -111,15 +113,17 @@ func (mock *SearchReindexClientMock) PostTasksCount(ctx context.Context, headers
 		Ctx     context.Context
 		Headers sdk.Headers
 		JobID   string
+		Payload []byte
 	}{
 		Ctx:     ctx,
 		Headers: headers,
 		JobID:   jobID,
+		Payload: payload,
 	}
 	lockSearchReindexClientMockPostTasksCount.Lock()
 	mock.calls.PostTasksCount = append(mock.calls.PostTasksCount, callInfo)
 	lockSearchReindexClientMockPostTasksCount.Unlock()
-	return mock.PostTasksCountFunc(ctx, headers, jobID)
+	return mock.PostTasksCountFunc(ctx, headers, jobID, payload)
 }
 
 // PostTasksCountCalls gets all the calls that were made to PostTasksCount.
@@ -129,11 +133,13 @@ func (mock *SearchReindexClientMock) PostTasksCountCalls() []struct {
 	Ctx     context.Context
 	Headers sdk.Headers
 	JobID   string
+	Payload []byte
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Headers sdk.Headers
 		JobID   string
+		Payload []byte
 	}
 	lockSearchReindexClientMockPostTasksCount.RLock()
 	calls = mock.calls.PostTasksCount

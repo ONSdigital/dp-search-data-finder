@@ -45,8 +45,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 
 	// Get the searchReindexApi client
 	httpClient := dphttp.NewClient()
-	// httpClient := dpsearchreindex.NewClientWithClienter(cfg.ServiceAuthToken, )
-	searchreindexClient := serviceList.GetSearchReindexApi(cfg, httpClient)
+	searchreindexClient := serviceList.GetSearchReindexAPI(cfg, httpClient)
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)

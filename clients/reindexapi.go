@@ -13,5 +13,5 @@ import (
 // DatasetApiClient defines the zebedee client
 type SearchReindexClient interface {
 	Checker(context.Context, *healthcheck.CheckState) error
-	PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string) (models.Task, error)
+	PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (models.Task, error)
 }

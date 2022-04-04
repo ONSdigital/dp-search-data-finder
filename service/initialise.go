@@ -20,7 +20,7 @@ type ExternalServiceList struct {
 	KafkaConsumer       bool
 	Init                Initialiser
 	ZebedeeCli          bool
-	SearchReindexApiCli bool
+	SearchReindexAPICli bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -30,7 +30,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 		KafkaConsumer:       false,
 		Init:                initialiser,
 		ZebedeeCli:          false,
-		SearchReindexApiCli: false,
+		SearchReindexAPICli: false,
 	}
 }
 
@@ -84,9 +84,9 @@ func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
 }
 
 // GetZebedee return searchreindexapi client
-func (e *ExternalServiceList) GetSearchReindexApi(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
+func (e *ExternalServiceList) GetSearchReindexAPI(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
 	searchReindexClient := e.Init.DoGetSearchReindexClient(cfg, httpClient)
-	e.SearchReindexApiCli = true
+	e.SearchReindexAPICli = true
 	return searchReindexClient
 }
 
