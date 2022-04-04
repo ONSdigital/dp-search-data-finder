@@ -21,7 +21,7 @@ type Initialiser interface {
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 	DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient
-	DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient
+	DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

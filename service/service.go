@@ -45,7 +45,11 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 
 	// Get the search reindex client
 	httpClient := dpHTTP.NewClient()
-	searchReindexClient := serviceList.GetSearchReindex(cfg, httpClient)
+	searchReindexClient, err := serviceList.GetSearchReindex(cfg, httpClient)
+	if err != nil {
+        log.Fatal(ctx, "could not initialise search reindex client", err)
+        return nil, err
+    }
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)

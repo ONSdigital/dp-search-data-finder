@@ -8,12 +8,14 @@ replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 // temporarily use local repo
 replace github.com/ONSdigital/dp-search-reindex-api v0.15.0 => /Users/cookel/EllasFiles/DpCodeRepos/dp-search-reindex-api
 
+//replace github.com/ONSdigital/dp-kafka/v3 v3.3.1 => /Users/cookel/EllasFiles/DpCodeRepos/dp-kafka
+
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.105.0
 	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v2 v2.5.0
-	github.com/ONSdigital/dp-kafka/v3 v3.3.1
+	github.com/ONSdigital/dp-kafka/v3 v3.3.2
 	github.com/ONSdigital/dp-net/v2 v2.1.0
 	github.com/ONSdigital/dp-search-reindex-api v0.15.0
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e

@@ -78,17 +78,23 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 }
 
 // GetSearchReindex returns search reindex client
-func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
-	searchReindexClient := e.Init.DoGetSearchReindexClient(cfg, httpClient)
+func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+	searchReindexClient, err := e.Init.DoGetSearchReindexClient(cfg, httpClient)
+	if err != nil {
+        return nil, err
+    }
 	e.SearchReindexCli = true
-	return searchReindexClient
+	return searchReindexClient, nil
 }
 
 // DoGetSearchReindexClient gets and initialises the Zebedee Client
-func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
+func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
 	healthClient := apiclientshealth.NewClientWithClienter("dp-search-data-finder", cfg.SearchReindexURL, httpClient)
-	searchReindexClient := searchreindex.NewClientWithHealthcheck(cfg.ServiceAuthToken, healthClient)
-	return searchReindexClient
+	searchReindexClient, err := searchreindex.NewWithHealthClient(cfg.ServiceAuthToken, healthClient)
+	if err != nil {
+        return nil, err
+    }
+	return searchReindexClient, nil
 }
 
 // DoGetZebedeeClient gets and initialises the Zebedee Client
