@@ -23,7 +23,7 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
 	// TODO add assert
 
-	return c.StepError()
+	return c.errorFeature.StepError()
 }
 
 func (c *Component) theseReindexrequestedEventsAreConsumed(table *godog.Table) error {

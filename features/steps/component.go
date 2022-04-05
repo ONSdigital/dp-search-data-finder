@@ -15,16 +15,20 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/ONSdigital/dp-search-data-finder/service/mock"
+	searchReindexClient "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 )
 
 type Component struct {
-	componenttest.ErrorFeature
-	serviceList   *service.ExternalServiceList
-	KafkaConsumer kafka.IConsumerGroup
-	zebedeeClient clients.ZebedeeClient
-	errorChan     chan error
-	svc           *service.Service
-	cfg           *config.Config
+	cfg                  *config.Config
+	errorFeature         componenttest.ErrorFeature
+	errorChan            chan error
+	fakeSearchReindexAPI *SearchReindexFeature
+	KafkaConsumer        kafka.IConsumerGroup
+	searchReindexClient  searchReindex.Client
+	serviceList          *service.ExternalServiceList
+	svc                  *service.Service
+	zebedeeClient        clients.ZebedeeClient
 }
 
 func NewComponent() *Component {
@@ -49,11 +53,23 @@ func NewComponent() *Component {
 
 	c.cfg = cfg
 
+	c.fakeSearchReindexAPI = NewSearchReindexFeature()
+	c.cfg.SearchReindexURL = c.fakeSearchReindexAPI.FakeSearchAPI.ResolveURL("")
+	c.searchReindexClient = *searchReindex.New(c.cfg.SearchReindexURL, "")
+
+	// Setup responses from registered checkers for component
+	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 200)
+
+	funcDoGetSearchReindexCli := func(cfg *config.Config) searchReindexClient.Client {
+		return &c.searchReindexClient
+	}
+
 	initMock := &mock.InitialiserMock{
-		DoGetKafkaConsumerFunc: c.DoGetConsumer,
-		DoGetHealthCheckFunc:   c.DoGetHealthCheck,
-		DoGetHTTPServerFunc:    c.DoGetHTTPServer,
-		DoGetZebedeeClientFunc: c.DoGetZebedeeClient,
+		DoGetKafkaConsumerFunc:       c.DoGetConsumer,
+		DoGetHealthCheckFunc:         c.DoGetHealthCheck,
+		DoGetHTTPServerFunc:          c.DoGetHTTPServer,
+		DoGetZebedeeClientFunc:       c.DoGetZebedeeClient,
+		DoGetSearchReindexClientFunc: funcDoGetSearchReindexCli,
 	}
 
 	c.serviceList = service.NewServiceList(initMock)
