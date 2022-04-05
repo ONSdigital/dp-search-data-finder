@@ -9,18 +9,20 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
+	"github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"net/http"
 	"sync"
 )
 
 var (
-	lockInitialiserMockDoGetHTTPServer    sync.RWMutex
-	lockInitialiserMockDoGetHealthCheck   sync.RWMutex
-	lockInitialiserMockDoGetKafkaConsumer sync.RWMutex
-	lockInitialiserMockDoGetZebedeeClient sync.RWMutex
+	lockInitialiserMockDoGetHTTPServer          sync.RWMutex
+	lockInitialiserMockDoGetHealthCheck         sync.RWMutex
+	lockInitialiserMockDoGetKafkaConsumer       sync.RWMutex
+	lockInitialiserMockDoGetSearchReindexClient sync.RWMutex
+	lockInitialiserMockDoGetZebedeeClient       sync.RWMutex
 )
 
-// Ensure, that InitialiserMock does implement Initialiser.
+// Ensure, that InitialiserMock does implement service.Initialiser.
 // If this is not the case, regenerate this file with moq.
 var _ service.Initialiser = &InitialiserMock{}
 
@@ -38,6 +40,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //             },
 //             DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 // 	               panic("mock out the DoGetKafkaConsumer method")
+//             },
+//             DoGetSearchReindexClientFunc: func(cfg *config.Config) sdk.Client {
+// 	               panic("mock out the DoGetSearchReindexClient method")
 //             },
 //             DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 // 	               panic("mock out the DoGetZebedeeClient method")
@@ -57,6 +62,9 @@ type InitialiserMock struct {
 
 	// DoGetKafkaConsumerFunc mocks the DoGetKafkaConsumer method.
 	DoGetKafkaConsumerFunc func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
+
+	// DoGetSearchReindexClientFunc mocks the DoGetSearchReindexClient method.
+	DoGetSearchReindexClientFunc func(cfg *config.Config) sdk.Client
 
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
 	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
@@ -87,6 +95,11 @@ type InitialiserMock struct {
 			Ctx context.Context
 			// KafkaCfg is the kafkaCfg argument value.
 			KafkaCfg *config.KafkaConfig
+		}
+		// DoGetSearchReindexClient holds details about calls to the DoGetSearchReindexClient method.
+		DoGetSearchReindexClient []struct {
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
 		}
 		// DoGetZebedeeClient holds details about calls to the DoGetZebedeeClient method.
 		DoGetZebedeeClient []struct {
@@ -206,6 +219,37 @@ func (mock *InitialiserMock) DoGetKafkaConsumerCalls() []struct {
 	lockInitialiserMockDoGetKafkaConsumer.RLock()
 	calls = mock.calls.DoGetKafkaConsumer
 	lockInitialiserMockDoGetKafkaConsumer.RUnlock()
+	return calls
+}
+
+// DoGetSearchReindexClient calls DoGetSearchReindexClientFunc.
+func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config) sdk.Client {
+	if mock.DoGetSearchReindexClientFunc == nil {
+		panic("InitialiserMock.DoGetSearchReindexClientFunc: method is nil but Initialiser.DoGetSearchReindexClient was just called")
+	}
+	callInfo := struct {
+		Cfg *config.Config
+	}{
+		Cfg: cfg,
+	}
+	lockInitialiserMockDoGetSearchReindexClient.Lock()
+	mock.calls.DoGetSearchReindexClient = append(mock.calls.DoGetSearchReindexClient, callInfo)
+	lockInitialiserMockDoGetSearchReindexClient.Unlock()
+	return mock.DoGetSearchReindexClientFunc(cfg)
+}
+
+// DoGetSearchReindexClientCalls gets all the calls that were made to DoGetSearchReindexClient.
+// Check the length with:
+//     len(mockedInitialiser.DoGetSearchReindexClientCalls())
+func (mock *InitialiserMock) DoGetSearchReindexClientCalls() []struct {
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Cfg *config.Config
+	}
+	lockInitialiserMockDoGetSearchReindexClient.RLock()
+	calls = mock.calls.DoGetSearchReindexClient
+	lockInitialiserMockDoGetSearchReindexClient.RUnlock()
 	return calls
 }
 
