@@ -93,7 +93,7 @@ func (e *ExternalServiceList) GetSearchReindexAPI(cfg *config.Config, httpClient
 // DoGetSearchReindexClient gets and initialises the SearchReindex Client
 func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
 	healthClient := apihealthcheck.NewClientWithClienter("dp-search-data-finder", cfg.SearchReindexURL, httpClient)
-	searchReindexClient := dpsearchreindex.NewClientWithHealthcheck(cfg.ServiceAuthToken, healthClient)
+	searchReindexClient, _ := dpsearchreindex.NewWithHealthClient(cfg.ServiceAuthToken, healthClient)
 	return searchReindexClient
 }
 
