@@ -25,7 +25,7 @@ var _ clients.SearchReindexClient = &SearchReindexClientMock{}
 // 			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
-// 			PatchJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOpsList searchReindexSDK.PatchOpsList) error {
+// 			PatchJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error) {
 // 				panic("mock out the PatchJob method")
 // 			},
 // 			PostJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (searchReindex.Job, error) {
@@ -42,7 +42,7 @@ type SearchReindexClientMock struct {
 	CheckerFunc func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error
 
 	// PatchJobFunc mocks the PatchJob method.
-	PatchJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOpsList searchReindexSDK.PatchOpsList) error
+	PatchJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error)
 
 	// PostJobFunc mocks the PostJob method.
 	PostJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (searchReindex.Job, error)
@@ -64,8 +64,8 @@ type SearchReindexClientMock struct {
 			Headers searchReindexSDK.Headers
 			// S is the s argument value.
 			S string
-			// PatchOpsList is the patchOpsList argument value.
-			PatchOpsList searchReindexSDK.PatchOpsList
+			// PatchOperations is the patchOperations argument value.
+			PatchOperations []searchReindexSDK.PatchOperation
 		}
 		// PostJob holds details about calls to the PostJob method.
 		PostJob []struct {
@@ -116,7 +116,7 @@ func (mock *SearchReindexClientMock) CheckerCalls() []struct {
 }
 
 // PatchJob calls PatchJobFunc.
-func (mock *SearchReindexClientMock) PatchJob(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOpsList searchReindexSDK.PatchOpsList) error {
+func (mock *SearchReindexClientMock) PatchJob(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error) {
 	if mock.PatchJobFunc == nil {
 		panic("SearchReindexClientMock.PatchJobFunc: method is nil but SearchReindexClient.PatchJob was just called")
 	}
@@ -124,17 +124,17 @@ func (mock *SearchReindexClientMock) PatchJob(contextMoqParam context.Context, h
 		ContextMoqParam context.Context
 		Headers         searchReindexSDK.Headers
 		S               string
-		PatchOpsList    searchReindexSDK.PatchOpsList
+		PatchOperations []searchReindexSDK.PatchOperation
 	}{
 		ContextMoqParam: contextMoqParam,
 		Headers:         headers,
 		S:               s,
-		PatchOpsList:    patchOpsList,
+		PatchOperations: patchOperations,
 	}
 	mock.lockPatchJob.Lock()
 	mock.calls.PatchJob = append(mock.calls.PatchJob, callInfo)
 	mock.lockPatchJob.Unlock()
-	return mock.PatchJobFunc(contextMoqParam, headers, s, patchOpsList)
+	return mock.PatchJobFunc(contextMoqParam, headers, s, patchOperations)
 }
 
 // PatchJobCalls gets all the calls that were made to PatchJob.
@@ -144,13 +144,13 @@ func (mock *SearchReindexClientMock) PatchJobCalls() []struct {
 	ContextMoqParam context.Context
 	Headers         searchReindexSDK.Headers
 	S               string
-	PatchOpsList    searchReindexSDK.PatchOpsList
+	PatchOperations []searchReindexSDK.PatchOperation
 } {
 	var calls []struct {
 		ContextMoqParam context.Context
 		Headers         searchReindexSDK.Headers
 		S               string
-		PatchOpsList    searchReindexSDK.PatchOpsList
+		PatchOperations []searchReindexSDK.PatchOperation
 	}
 	mock.lockPatchJob.RLock()
 	calls = mock.calls.PatchJob
