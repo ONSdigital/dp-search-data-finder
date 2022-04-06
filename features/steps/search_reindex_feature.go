@@ -7,27 +7,28 @@ import (
 // SearchReindexFeature contains all the information for a fake component API
 type SearchReindexFeature struct {
 	ErrorFeature
-	FakeSearchAPI *httpfake.HTTPFake
+	FakeAPI *httpfake.HTTPFake
 }
 
 func NewSearchReindexFeature() *SearchReindexFeature {
 	f := &SearchReindexFeature{
-		FakeSearchAPI: httpfake.New(),
+		FakeAPI: httpfake.New(),
 	}
 
 	return f
 }
 
 func (f *SearchReindexFeature) setJSONResponseForGetHealth(url string, statusCode int) {
-	f.FakeSearchAPI.NewHandler().Get(url).Reply(statusCode)
+	f.FakeAPI.NewHandler().Get(url).Reply(statusCode)
 }
 
 // Close closes the fake API
 func (f *SearchReindexFeature) Close() {
-	f.FakeSearchAPI.Close()
+	f.FakeAPI.Close()
 }
 
 // Reset resets the fake API
 func (f *SearchReindexFeature) Reset() {
-	f.FakeSearchAPI.Reset()
+	f.FakeAPI.Reset()
+	// f.setJSONResponseForGetHealth("/health", 200)
 }
