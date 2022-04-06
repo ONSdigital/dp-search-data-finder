@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	dpkafka "github.com/ONSdigital/dp-kafka/v2"
-	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
+	dpkafka "github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/event/mock"
@@ -16,22 +16,24 @@ import (
 )
 
 const (
-	someURI         = "test-uri"
-	someDataType    = "test-datatype"
-	someJobID       = "test-Jobid"
-	someTraceID     = "w34234dgdge335g3333"
-	someSearchIndex = "test-searchindex"
+	someURI          = "test-uri"
+	someDataType     = "test-datatype"
+	someCollectionID = "test-collectionID"
+	someJobID        = "test-Jobid"
+	someTraceID      = "w34234dgdge335g3333"
+	someSearchIndex  = "test-searchindex"
 )
 
 var (
 	ctx = context.Background()
 
 	expectedContentUpdatedEvent = models.ContentUpdated{
-		URI:         someURI,
-		DataType:    someDataType,
-		JobID:       someJobID,
-		TraceID:     someTraceID,
-		SearchIndex: someSearchIndex,
+		URI:          someURI,
+		DataType:     someDataType,
+		CollectionID: someCollectionID,
+		JobID:        someJobID,
+		TraceID:      someTraceID,
+		SearchIndex:  someSearchIndex,
 	}
 )
 

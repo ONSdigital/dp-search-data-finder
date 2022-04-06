@@ -33,7 +33,7 @@ debug:
 
 .PHONY: test
 test:
-	go test -race -cover ./...
+	go test -race -cover -count=1 ./...
 
 .PHONY: produce
 produce:
