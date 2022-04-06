@@ -30,5 +30,4 @@ func (f *SearchReindexFeature) Close() {
 // Reset resets the fake API
 func (f *SearchReindexFeature) Reset() {
 	f.FakeAPI.Reset()
-	// f.setJSONResponseForGetHealth("/health", 200)
 }

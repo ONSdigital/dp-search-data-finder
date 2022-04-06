@@ -24,8 +24,11 @@ import (
 const (
 	gitCommitHash = "3t7e5s1t4272646ef477f8ed755"
 	appVersion    = "v1.2.3"
-	serviceName   = "search-data-finder-test"
 )
+
+type state string
+
+var s state = "state"
 
 type Component struct {
 	APIFeature           *componenttest.APIFeature
@@ -126,11 +129,14 @@ func (c *Component) Close() error {
 	return nil
 }
 
-func (c *Component) Reset() *Component {
+func (c *Component) Reset() (*Component, error) {
 	c.fakeSearchReindexAPI.Reset()
-	ctx := context.WithValue(context.Background(), "state", "empty")
-	c.fakeKafkaConsumer.Checker(ctx, healthcheck.NewCheckState("topic-test"))
-	return c
+	ctx := context.WithValue(context.Background(), s, "empty")
+	if err := c.fakeKafkaConsumer.Checker(ctx, healthcheck.NewCheckState("topic-test")); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }
 
 // InitialiseService returns the http.Handler that's contained within the component.
@@ -156,15 +162,19 @@ func (c *Component) getHTTPServer(bindAddr string, router http.Handler) service.
 
 func funcCheck(ctx context.Context, state *healthcheck.CheckState) error {
 	var str string
-	healthState := ctx.Value("state")
+	healthState := ctx.Value(s)
 	if healthState != nil {
 		str = fmt.Sprintf("%v", healthState)
 	}
 
 	if str == "empty" {
-		state = &healthcheck.CheckState{}
+		if err := state.Update("", "", 0); err != nil {
+			return err
+		}
 	} else {
-		state.Update(healthcheck.StatusOK, "OK", 0)
+		if err := state.Update(healthcheck.StatusOK, "OK", 0); err != nil {
+			return err
+		}
 	}
 
 	return nil

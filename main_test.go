@@ -40,7 +40,6 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	component.RegisterSteps(ctx)
 
 	afterScenarioHook := func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		// component.Close()
 		return ctx, nil
 	}
 

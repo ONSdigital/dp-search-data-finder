@@ -60,22 +60,28 @@ func delayTimeBySeconds(seconds string) (err error) {
 	return
 }
 
-func (c *Component) allOfTheDownstreamServicesAreHealthy() {
-	c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
 	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 200)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
+	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+
+	return
 }
 
-func (c *Component) searchReindexAPIStateWarning() {
-	c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+func (c *Component) searchReindexAPIStateWarning() (err error) {
 	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 429)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
+	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+
+	return
 }
 
-func (c *Component) searchReindexAPIStateCritical() {
-	c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+func (c *Component) searchReindexAPIStateCritical() (err error) {
 	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 500)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
+	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+
+	return
 }
 
 func (c *Component) iShouldReceiveTheFollowingHealthJSONResponse(expectedResponse *godog.DocString) error {
@@ -115,7 +121,7 @@ func (c *Component) validateHealthCheckResponse(healthResponse, expectedResponse
 	}
 }
 
-func (c *Component) validateHealthVersion(versionResponse healthcheck.VersionInfo, expectedVersion healthcheck.VersionInfo, maxExpectedStartTime time.Time) {
+func (c *Component) validateHealthVersion(versionResponse, expectedVersion healthcheck.VersionInfo, maxExpectedStartTime time.Time) {
 	assert.True(&c.errorFeature, versionResponse.BuildTime.Before(maxExpectedStartTime))
 	assert.Equal(&c.errorFeature, expectedVersion.GitCommit, versionResponse.GitCommit)
 	assert.Equal(&c.errorFeature, expectedVersion.Language, versionResponse.Language)
