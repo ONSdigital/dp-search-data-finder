@@ -18,11 +18,16 @@ type ReindexRequestedHandler struct {
 	Config           config.Config
 }
 
+type key int
+
+const keyRequestID key = iota
+
 // Handle takes a single event.
 func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.ReindexRequested) (err error) {
 	logData := log.Data{
 		"event": event,
 	}
+	ctx = context.WithValue(ctx, keyRequestID, event.TraceID)
 	log.Info(ctx, "reindex requested event handler called", logData)
 
 	if h.ZebedeeCli == nil {
