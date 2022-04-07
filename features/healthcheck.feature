@@ -2,7 +2,7 @@ Feature: Healthcheck endpoint should inform the health of service
 
     Scenario: App health returning a OK (200) status when all downstream apps are healthy 
         Given all of the downstream services are healthy
-        And I wait "1" seconds for the healthcheck to update
+        And I wait "1500" milliseconds for the healthcheck to update
         When I GET "/health"
         Then the HTTP status code should be "200"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
@@ -41,7 +41,7 @@ Feature: Healthcheck endpoint should inform the health of service
 
     Scenario: App health returning a WARNING (429) status as search reindex api health is in warning state
         Given the Search Reindex API is unhealthy with state warning
-        And I wait "1" seconds for the healthcheck to update
+        And I wait "1500" milliseconds for the healthcheck to update
         When I GET "/health"
         Then the HTTP status code should be "429"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
@@ -80,7 +80,7 @@ Feature: Healthcheck endpoint should inform the health of service
 
     Scenario: App health returning WARNING (429), then CRITICAL (500) as search reindex api health is in critical state
         Given the Search Reindex API is unhealthy with state critical
-        And I wait "1" seconds for the healthcheck to update
+        And I wait "1500" milliseconds for the healthcheck to update
         When I GET "/health"
         Then the HTTP status code should be "429"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
@@ -116,7 +116,7 @@ Feature: Healthcheck endpoint should inform the health of service
                 ]
             }
         """
-        And I wait "2" seconds for the healthcheck to update after surpassing the critical timeout
+        And I wait "2000" milliseconds for the healthcheck to update after surpassing the critical timeout
         When I GET "/health"
         Then the HTTP status code should be "500"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
@@ -152,4 +152,3 @@ Feature: Healthcheck endpoint should inform the health of service
                 ]
             }
         """
-        

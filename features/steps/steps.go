@@ -39,7 +39,7 @@ type Check struct {
 }
 
 func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I wait "([^"]*)" seconds`, delayTimeBySeconds)
+	ctx.Step(`^I wait "([^"]*)" milliseconds`, delayTimeByMilliSeconds)
 	ctx.Step(`^all of the downstream services are healthy$`, c.allOfTheDownstreamServicesAreHealthy)
 	ctx.Step(`^the Search Reindex API is unhealthy with state warning`, c.searchReindexAPIStateWarning)
 	ctx.Step(`^the Search Reindex API is unhealthy with state critical`, c.searchReindexAPIStateCritical)
@@ -49,14 +49,14 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I should receive a reindex-requested response$`, c.iShouldReceiveAReindexrequestedResponse)
 }
 
-// delayTimeBySeconds pauses the goroutine for the given seconds
-func delayTimeBySeconds(seconds string) (err error) {
-	sec, err := strconv.Atoi(seconds)
+// delayTimeByMilliSeconds pauses the goroutine for the given seconds
+func delayTimeByMilliSeconds(milliseconds string) (err error) {
+	sec, err := strconv.Atoi(milliseconds)
 	if err != nil {
 		return
 	}
 
-	time.Sleep(time.Duration(sec) * time.Second)
+	time.Sleep(time.Duration(sec) * time.Millisecond)
 	return
 }
 
