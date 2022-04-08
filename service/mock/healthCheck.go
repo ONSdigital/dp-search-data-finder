@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/ONSdigital/dp-search-data-finder/service"
 	"net/http"
 	"sync"
+
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-search-data-finder/service"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	lockHealthCheckerMockStop     sync.RWMutex
 )
 
-// Ensure, that HealthCheckerMock does implement HealthChecker.
+// Ensure, that HealthCheckerMock does implement service.HealthChecker.
 // If this is not the case, regenerate this file with moq.
 var _ service.HealthChecker = &HealthCheckerMock{}
 

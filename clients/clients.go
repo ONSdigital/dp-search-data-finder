@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	zebedeeclient "github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/models"
@@ -21,6 +22,9 @@ type ZebedeeClient interface {
 // SearchReindexClient defines the search reindex client
 type SearchReindexClient interface {
 	Checker(context.Context, *healthcheck.CheckState) error
-	PostJob(context.Context, searchReindexSDK.Headers) (searchReindex.Job, error)
+	Health() *health.Client
 	PatchJob(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (string, error)
+	PostJob(context.Context, searchReindexSDK.Headers) (searchReindex.Job, error)
+	PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (searchReindex.Task, error)
+	URL() string
 }

@@ -5,16 +5,17 @@ package mock
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/models"
-	"sync"
 )
 
 var (
 	lockHandlerMockHandle sync.RWMutex
 )
 
-// Ensure, that HandlerMock does implement Handler.
+// Ensure, that HandlerMock does implement event.Handler.
 // If this is not the case, regenerate this file with moq.
 var _ event.Handler = &HandlerMock{}
 

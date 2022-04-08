@@ -2,13 +2,13 @@ package handler
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/pkg/errors"
 )
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
@@ -29,10 +29,6 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	}
 	ctx = context.WithValue(ctx, keyRequestID, event.TraceID)
 	log.Info(ctx, "reindex requested event handler called", logData)
-
-	if h.ZebedeeCli == nil {
-		return errors.New("the Zebedee client in the reindex requested handler must not be nil")
-	}
 
 	publishedIndex, err := h.ZebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
