@@ -85,6 +85,8 @@ github.com/ONSdigital/dp-net/v2 v2.1.0/go.mod h1:Pv/35rM5tCLYdVdIZ5KoGu2EUXv/87f
 github.com/ONSdigital/dp-rchttp v0.0.0-20190919143000-bb5699e6fd59/go.mod h1:KkW68U3FPuivW4ogi9L8CPKNj9ZxGko4qcUY7KoAAkQ=
 github.com/ONSdigital/dp-rchttp v0.0.0-20200114090501-463a529590e8/go.mod h1:821jZtK0oBsV8hjIkNr8vhAWuv0FxJBPJuAHa2B70Gk=
 github.com/ONSdigital/dp-rchttp v1.0.0/go.mod h1:821jZtK0oBsV8hjIkNr8vhAWuv0FxJBPJuAHa2B70Gk=
+github.com/ONSdigital/dp-search-reindex-api v0.17.0 h1:EoGhhM3BybSBcHlQ3LaxSpjlOTJg8VZfOB0C9yCs/2Q=
+github.com/ONSdigital/dp-search-reindex-api v0.17.0/go.mod h1:D+xy8rs6Lx2IbZ2HwubU2PMGS2EiWTfTFjjTN19UbN4=
 github.com/ONSdigital/go-ns v0.0.0-20191104121206-f144c4ec2e58/go.mod h1:iWos35il+NjbvDEqwtB736pyHru0MPFE/LqcwkV1wDc=
 github.com/ONSdigital/go-ns v0.0.0-20200205115900-a11716f93bad/go.mod h1:uHT6LaUlRbJsJRrIlN31t+QLUB80tAbk6ZR9sfoHL8Y=
 github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e h1:o+AK5m0lxRIFn4t9ng9x19kez72ErAB0cW9ArT6sAZM=
