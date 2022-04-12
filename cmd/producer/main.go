@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	kafka "github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/dp-search-data-finder/schema"
@@ -28,8 +28,9 @@ func main() {
 	}
 
 	// Create Kafka Producer
-	pChannels := kafka.CreateProducerChannels()
 	pConfig := &kafka.ProducerConfig{
+		BrokerAddrs:  cfg.KafkaConfig.Brokers,
+		Topic:        cfg.KafkaConfig.ContentUpdatedTopic,
 		KafkaVersion: &cfg.KafkaConfig.Version,
 	}
 	// KafkaTLSProtocol informs service to use TLS protocol for kafka
@@ -42,14 +43,14 @@ func main() {
 		)
 	}
 
-	kafkaProducer, err := kafka.NewProducer(ctx, cfg.KafkaConfig.Brokers, cfg.KafkaConfig.ContentUpdatedTopic, pChannels, pConfig)
+	kafkaProducer, err := kafka.NewProducer(ctx, pConfig)
 	if err != nil {
 		log.Fatal(ctx, "fatal error trying to create kafka producer", err, log.Data{"topic": cfg.KafkaConfig.ContentUpdatedTopic})
 		os.Exit(1)
 	}
 
 	// kafka error logging go-routines
-	kafkaProducer.Channels().LogErrors(ctx, "kafka producer")
+	kafkaProducer.LogErrors(ctx)
 
 	time.Sleep(500 * time.Millisecond)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -82,10 +83,11 @@ func scanEvent(scanner *bufio.Scanner) *models.ContentUpdated {
 	uri := scanner.Text()
 
 	return &models.ContentUpdated{
-		URI:         uri,
-		DataType:    "legacy",
-		JobID:       "",
-		TraceID:     "054435ded",
-		SearchIndex: "ONS",
+		URI:          uri,
+		DataType:     "legacy",
+		CollectionID: "collectionID",
+		JobID:        "",
+		TraceID:      "054435ded",
+		SearchIndex:  "ONS",
 	}
 }
