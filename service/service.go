@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/health"
-	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -25,26 +25,19 @@ type Service struct {
 	shutdownTimeout time.Duration
 }
 
-func newZebedeeClient(httpClient dpHTTP.Clienter, cfg *config.Config) *zebedee.Client {
-	healthClient := health.NewClientWithClienter("", cfg.ZebedeeURL, httpClient)
-	zebedeeClient := zebedee.NewWithHealthClient(healthClient)
-	return zebedeeClient
-}
-
 // Run the service
-func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
-
-	// Read config
-	cfg, err := config.Get()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to retrieve service configuration")
-	}
-	log.Info(ctx, "got service configuration", log.Data{"config": cfg})
 
 	// Get HTTP Server with collectionID checkHeader middleware
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
+
+	// Get the zebedee client
+	zebedeeClient := serviceList.GetZebedee(cfg)
+
+	// Get the search reindex client
+	searchReindexClient := serviceList.GetSearchReindex(cfg)
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
@@ -53,13 +46,11 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	httpClient := dpHTTP.NewClient()
-	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
-	zebedeeClient := newZebedeeClient(httpClient, cfg)
-
 	// Event Handler for Kafka Consumer
-	handler := &event.ReindexRequestedHandler{ZebedeeClient: zebedeeClient}
-	event.Consume(ctx, consumer, handler, cfg)
+	eventhandler := &handler.ReindexRequestedHandler{
+		ZebedeeCli: zebedeeClient}
+
+	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
 		log.Fatal(ctx, "error starting the consumer", consumerStartErr)
 		return nil, consumerStartErr
@@ -72,7 +63,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, zebedeeClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, zebedeeClient, searchReindexClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -160,7 +151,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient *zebedee.Client) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient, searchReindexClient searchReindex.Client) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
@@ -169,7 +160,11 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 	}
 	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for zebedee", err)
+		log.Error(ctx, "error adding check for Zebedee", err)
+	}
+	if err := hc.AddCheck("Search Reindex API", searchReindexClient.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for Search Reindex API", err)
 	}
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")

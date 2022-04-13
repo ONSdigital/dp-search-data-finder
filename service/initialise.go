@@ -4,32 +4,40 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	searchReindexClient "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 )
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
-	HealthCheck   bool
-	KafkaConsumer bool
-	Init          Initialiser
+	HealthCheck      bool
+	Init             Initialiser
+	KafkaConsumer    bool
+	SearchReindexCli bool
+	ZebedeeCli       bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
 func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
-		HealthCheck:   false,
-		KafkaConsumer: false,
-		Init:          initialiser,
+		HealthCheck:      false,
+		Init:             initialiser,
+		KafkaConsumer:    false,
+		SearchReindexCli: false,
+		ZebedeeCli:       false,
 	}
 }
 
 // Init implements the Initialiser interface to initialise dependencies
 type Init struct{}
 
-// GetHTTPServer creates an http server and sets the Server flag to true
+// GetHTTPServer creates an http server
 func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := e.Init.DoGetHTTPServer(bindAddr, router)
 	return s
@@ -60,6 +68,32 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
 	return s
+}
+
+// GetSearchReindex return Search Reindex client
+func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config) searchReindexClient.Client {
+	client := e.Init.DoGetSearchReindexClient(cfg)
+	e.SearchReindexCli = true
+	return client
+}
+
+// DoGetZebedeeClient gets and initialises the Search Reindex Client
+func (e *Init) DoGetSearchReindexClient(cfg *config.Config) searchReindexClient.Client {
+	client := searchReindex.New(cfg.SearchReindexURL, cfg.ServiceAuthToken)
+	return client
+}
+
+// GetZebedee return Zebedee client
+func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClient {
+	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
+	e.ZebedeeCli = true
+	return zebedeeClient
+}
+
+// DoGetZebedeeClient gets and initialises the Zebedee Client
+func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
+	zebedeeClient := zebedee.New(cfg.ZebedeeURL)
+	return zebedeeClient
 }
 
 // DoGetKafkaConsumer returns a Kafka Consumer group

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"testing"
 
@@ -19,27 +20,30 @@ type ComponentTest struct {
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	component := steps.NewComponent()
+	component, err := steps.NewSearchDataFinderComponent()
+	if err != nil {
+		fmt.Printf("failed to create search data finder component - error: %v", err)
+		os.Exit(1)
+	}
+
+	apiFeature := component.InitAPIFeature()
 
 	beforeScenarioHook := func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+		apiFeature.Reset()
 		component.Reset()
 		return ctx, nil
 	}
 
 	ctx.Before(beforeScenarioHook)
 
+	apiFeature.RegisterSteps(ctx)
+	component.RegisterSteps(ctx)
+
 	afterScenarioHook := func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		component.Close()
-		return ctx, err
+		return ctx, nil
 	}
 
 	ctx.After(afterScenarioHook)
-
-	component.RegisterSteps(ctx)
-}
-
-func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
-
 }
 
 func TestComponent(t *testing.T) {
@@ -55,14 +59,17 @@ func TestComponent(t *testing.T) {
 		f := &ComponentTest{}
 
 		status = godog.TestSuite{
-			Name:                 "feature_tests",
-			ScenarioInitializer:  f.InitializeScenario,
-			TestSuiteInitializer: f.InitializeTestSuite,
-			Options:              &opts,
+			Name:                "feature_tests",
+			ScenarioInitializer: f.InitializeScenario,
+			Options:             &opts,
 		}.Run()
 
+		fmt.Println("=================================")
+		fmt.Printf("Component test coverage: %.2f%%\n", testing.Coverage()*100)
+		fmt.Println("=================================")
+
 		if status > 0 {
-			t.Fail()
+			t.FailNow()
 		}
 	} else {
 		t.Skip("component flag required to run component tests")
