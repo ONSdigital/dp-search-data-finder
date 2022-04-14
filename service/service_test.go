@@ -10,12 +10,13 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	clientMock "github.com/ONSdigital/dp-search-data-finder/clients/mock"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	serviceMock "github.com/ONSdigital/dp-search-data-finder/service/mock"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindexMocks "github.com/ONSdigital/dp-search-reindex-api/sdk/mocks"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -45,6 +46,11 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 }
 
 func TestRun(t *testing.T) {
+	testCfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error is: %v", err)
+	}
+
 	Convey("Having a set of mocked dependencies", t, func() {
 		consumerMock := &kafkatest.IConsumerGroupMock{
 			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
@@ -69,7 +75,7 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
-		searchReindexAPIMock := &clientMock.SearchReindexClientMock{
+		searchReindexMock := &searchReindexMocks.ClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -89,26 +95,27 @@ func TestRun(t *testing.T) {
 			return zebedeeMock
 		}
 
-		funcDoGetSearchReindexOk := func(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
-			return searchReindexAPIMock
+		funcDoGetSearchReindexOk := func(cfg *config.Config) searchReindex.Client {
+			return searchReindexMock
 		}
 
 		Convey("Given that initialising Kafka consumer returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:          funcDoGetHTTPServerNil,
 				DoGetKafkaConsumerFunc:       funcDoGetKafkaConsumerErr,
-				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
+				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errKafkaConsumer)
 				So(svcList.KafkaConsumer, ShouldBeFalse)
 				So(svcList.HealthCheck, ShouldBeFalse)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
+				So(svcList.SearchReindexAPICli, ShouldBeTrue)
 			})
 		})
 
@@ -117,12 +124,12 @@ func TestRun(t *testing.T) {
 				DoGetHTTPServerFunc:          funcDoGetHTTPServerNil,
 				DoGetHealthCheckFunc:         funcDoGetHealthcheckErr,
 				DoGetKafkaConsumerFunc:       funcDoGetKafkaConsumerOk,
-				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
+				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errHealthcheck)
@@ -138,13 +145,13 @@ func TestRun(t *testing.T) {
 				DoGetHTTPServerFunc:          funcDoGetHTTPServer,
 				DoGetHealthCheckFunc:         funcDoGetHealthcheckOk,
 				DoGetKafkaConsumerFunc:       funcDoGetKafkaConsumerOk,
-				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
+				DoGetZebedeeClientFunc:       funcDoGetZebedeeOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
@@ -158,7 +165,7 @@ func TestRun(t *testing.T) {
 				So(len(hcMock.AddCheckCalls()), ShouldEqual, 3)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
-				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "SearchReindexApi")
+				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "Search Reindex API")
 				So(len(initMock.DoGetHTTPServerCalls()), ShouldEqual, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:28000")
 				So(len(hcMock.StartCalls()), ShouldEqual, 1)
@@ -185,7 +192,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails, but all checks try to register", func() {
 				So(err, ShouldNotBeNil)
@@ -203,6 +210,11 @@ func TestRun(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	testCfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error is: %v", err)
+	}
+
 	Convey("Having a correctly initialised service", t, func() {
 		hcStopped := false
 
@@ -232,16 +244,12 @@ func TestClose(t *testing.T) {
 			},
 		}
 
-		searchReindexAPIMock := &clientMock.SearchReindexClientMock{
+		searchReindexAPIMock := &searchReindexMocks.ClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
 		zebedeeMock := &clientMock.ZebedeeClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
-		}
-
-		funcDoGetSearchReindexOk := func(cfg *config.Config, httpClient dphttp.Clienter) clients.SearchReindexClient {
-			return searchReindexAPIMock
 		}
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
@@ -254,12 +262,12 @@ func TestClose(t *testing.T) {
 					return consumerMock, nil
 				},
 				DoGetZebedeeClientFunc:       func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
-				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
+				DoGetSearchReindexClientFunc: func(cfg *config.Config) searchReindex.Client { return searchReindexAPIMock },
 			}
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())
@@ -286,12 +294,12 @@ func TestClose(t *testing.T) {
 					return consumerMock, nil
 				},
 				DoGetZebedeeClientFunc:       func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
-				DoGetSearchReindexClientFunc: funcDoGetSearchReindexOk,
+				DoGetSearchReindexClientFunc: func(cfg *config.Config) searchReindex.Client { return searchReindexAPIMock },
 			}
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc, err := service.Run(ctx, testCfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())

@@ -1,25 +1,25 @@
 package schema
 
 import (
-	"github.com/ONSdigital/go-ns/avro"
+	"github.com/ONSdigital/dp-kafka/v3/avro"
 )
 
-var contentPublished = `{
-	"type": "record",
-	"name": "content-published",
-	"fields": [
-	  {"name": "uri", "type": "string", "default": ""},
-	  {"name": "data_type", "type": "string", "default": ""},
-	  {"name": "collection_id", "type": "string", "default": ""},
-	  {"name": "job_id", "type": "string", "default": ""},
-	  {"name": "search_index", "type": "string", "default": ""},
-	  {"name": "trace_id", "type": "string", "default": ""}
-	]
-  }`
+var contentUpdated = `{
+  "type": "record",
+  "name": "content-updated",
+  "fields": [
+    {"name": "uri", "type": "string", "default": ""},
+    {"name": "data_type", "type": "string", "default": ""},
+    {"name": "collection_id", "type": "string", "default": ""},
+    {"name": "job_id", "type": "string", "default": ""},
+    {"name": "trace_id", "type": "string", "default": ""},
+    {"name": "search_index", "type": "string", "default": ""}
+  ]
+}`
 
-// ContentPublishedEvent is the Avro schema for Content Updated messages.
-var ContentPublishedEvent = &avro.Schema{
-	Definition: contentPublished,
+// ContentUpdatedEvent is the Avro schema for Content Updated messages.
+var ContentUpdatedEvent = &avro.Schema{
+	Definition: contentUpdated,
 }
 
 var reindexRequestedEvent = `{

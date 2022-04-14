@@ -3,7 +3,7 @@ package event
 import (
 	"context"
 
-	dpkafka "github.com/ONSdigital/dp-kafka/v2"
+	dpkafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/ONSdigital/log.go/v2/log"

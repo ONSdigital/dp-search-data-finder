@@ -5,11 +5,11 @@ import (
 	"time"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/handler"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -26,15 +26,8 @@ type Service struct {
 }
 
 // Run the service
-func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
-
-	// Read config
-	cfg, err := config.Get()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to retrieve service configuration")
-	}
-	log.Info(ctx, "got service configuration", log.Data{"config": cfg})
 
 	// Get HTTP Server with collectionID checkHeader middleware
 	r := mux.NewRouter()
@@ -43,9 +36,8 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg)
 
-	// Get the searchReindexApi client
-	httpClient := dphttp.NewClient()
-	searchreindexClient := serviceList.GetSearchReindexAPI(cfg, httpClient)
+	// Get the search reindex client
+	searchReindexClient := serviceList.GetSearchReindex(cfg)
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
@@ -57,7 +49,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
 		ZebedeeCli:       zebedeeClient,
-		SearchReindexCli: searchreindexClient,
+		SearchReindexCli: searchReindexClient,
 	}
 	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {
@@ -72,7 +64,7 @@ func Run(ctx context.Context, serviceList *ExternalServiceList, buildTime, gitCo
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, zebedeeClient, searchreindexClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, zebedeeClient, searchReindexClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -160,7 +152,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient, searchreindexClient clients.SearchReindexClient) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient, searchReindexClient searchReindex.Client) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
@@ -169,11 +161,11 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 	}
 	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for zebedee", err)
+		log.Error(ctx, "error adding check for Zebedee", err)
 	}
-	if err := hc.AddCheck("SearchReindexApi", searchreindexClient.Checker); err != nil {
+	if err := hc.AddCheck("Search Reindex API", searchReindexClient.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for zebedee", err)
+		log.Error(ctx, "error adding check for Search Reindex API", err)
 	}
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
