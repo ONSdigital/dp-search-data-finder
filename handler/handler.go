@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	zebedeeTaskName    = "zebedee"
-	datasetAPITaskName = "dataset-api"
+	zebedeeTaskName = "zebedee"
 )
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
@@ -76,16 +75,13 @@ func (h *ReindexRequestedHandler) GetPayload(ctx context.Context, noOfDocument i
 	}
 
 	for key, value := range m {
-		if key == zebedeeTaskName {
-			task = value
-		} else if key == datasetAPITaskName {
-			task = value
-		} else {
+		if key != zebedeeTaskName {
 			log.Info(ctx, "invalid taskname", log.Data{
 				"taskvalue": task,
 			})
 			return nil, errors.New("invalid taskname")
 		}
+		task = value
 	}
 
 	payload := []byte(task)

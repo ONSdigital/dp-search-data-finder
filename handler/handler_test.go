@@ -107,8 +107,7 @@ func TestGetPayloads(t *testing.T) {
 	})
 	Convey("Given a valid taskname", t, func() {
 		testTaskNames := map[string]string{
-			"zebedee":     "zebedee",
-			"dataset-api": "dataset-api",
+			"zebedee": "zebedee",
 		}
 		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
 		var SearchReindexMock = &clientMock.SearchReindexClientMock{PostTasksCountFunc: postTasksCountFunc}
