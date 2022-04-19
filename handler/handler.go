@@ -70,7 +70,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 }
 
 func (h *ReindexRequestedHandler) GetPayload(ctx context.Context, noOfDocument int, m map[string]string) ([]byte, error) {
-	task := ""
+	var task string
 	if len(m) == 0 {
 		return nil, errors.New("no tasks exists")
 	}
@@ -87,6 +87,7 @@ func (h *ReindexRequestedHandler) GetPayload(ctx context.Context, noOfDocument i
 			return nil, errors.New("invalid taskname")
 		}
 	}
+
 	payload := []byte(task)
 	payload = append(payload, byte(noOfDocument))
 	log.Info(ctx, "endpoint request params", log.Data{
