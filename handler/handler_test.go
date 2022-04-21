@@ -32,12 +32,15 @@ var (
 	}
 
 	errSearchReindex = errors.New("search reindex test error")
-	patchJobFails    = func(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (string, error) {
-		return "", errSearchReindex
+	patchJobFails    = func(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error) {
+		return &searchReindexSDK.RespHeaders{}, errSearchReindex
 	}
 
-	patchJobFunc = func(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (string, error) {
-		return `"56b6890f1321590998d5fd8d293b620581ff3531"`, nil
+	patchJobFunc = func(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error) {
+		respHeaders := searchReindexSDK.RespHeaders{
+			ETag: `"56b6890f1321590998d5fd8d293b620581ff3531"`,
+		}
+		return &respHeaders, nil
 	}
 )
 

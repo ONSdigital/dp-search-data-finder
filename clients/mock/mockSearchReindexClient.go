@@ -5,13 +5,12 @@ package mock
 
 import (
 	"context"
-	"sync"
-
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/models"
 	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	"sync"
 )
 
 // Ensure, that SearchReindexClientMock does implement clients.SearchReindexClient.
@@ -27,16 +26,19 @@ var _ clients.SearchReindexClient = &SearchReindexClientMock{}
 // 			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
+// 			GetTaskFunc: func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, taskName string) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error) {
+// 				panic("mock out the GetTask method")
+// 			},
 // 			HealthFunc: func() *health.Client {
 // 				panic("mock out the Health method")
 // 			},
-// 			PatchJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error) {
+// 			PatchJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error) {
 // 				panic("mock out the PatchJob method")
 // 			},
-// 			PostJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (searchReindex.Job, error) {
+// 			PostJobFunc: func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (*searchReindex.Job, error) {
 // 				panic("mock out the PostJob method")
 // 			},
-// 			PostTasksCountFunc: func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (searchReindex.Task, error) {
+// 			PostTasksCountFunc: func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error) {
 // 				panic("mock out the PostTasksCount method")
 // 			},
 // 			URLFunc: func() string {
@@ -52,17 +54,20 @@ type SearchReindexClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error
 
+	// GetTaskFunc mocks the GetTask method.
+	GetTaskFunc func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, taskName string) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error)
+
 	// HealthFunc mocks the Health method.
 	HealthFunc func() *health.Client
 
 	// PatchJobFunc mocks the PatchJob method.
-	PatchJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error)
+	PatchJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error)
 
 	// PostJobFunc mocks the PostJob method.
-	PostJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (searchReindex.Job, error)
+	PostJobFunc func(contextMoqParam context.Context, headers searchReindexSDK.Headers) (*searchReindex.Job, error)
 
 	// PostTasksCountFunc mocks the PostTasksCount method.
-	PostTasksCountFunc func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (searchReindex.Task, error)
+	PostTasksCountFunc func(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error)
 
 	// URLFunc mocks the URL method.
 	URLFunc func() string
@@ -75,6 +80,17 @@ type SearchReindexClientMock struct {
 			ContextMoqParam context.Context
 			// CheckState is the checkState argument value.
 			CheckState *healthcheck.CheckState
+		}
+		// GetTask holds details about calls to the GetTask method.
+		GetTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Headers is the headers argument value.
+			Headers searchReindexSDK.Headers
+			// JobID is the jobID argument value.
+			JobID string
+			// TaskName is the taskName argument value.
+			TaskName string
 		}
 		// Health holds details about calls to the Health method.
 		Health []struct {
@@ -113,6 +129,7 @@ type SearchReindexClientMock struct {
 		}
 	}
 	lockChecker        sync.RWMutex
+	lockGetTask        sync.RWMutex
 	lockHealth         sync.RWMutex
 	lockPatchJob       sync.RWMutex
 	lockPostJob        sync.RWMutex
@@ -155,6 +172,49 @@ func (mock *SearchReindexClientMock) CheckerCalls() []struct {
 	return calls
 }
 
+// GetTask calls GetTaskFunc.
+func (mock *SearchReindexClientMock) GetTask(ctx context.Context, headers searchReindexSDK.Headers, jobID string, taskName string) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error) {
+	if mock.GetTaskFunc == nil {
+		panic("SearchReindexClientMock.GetTaskFunc: method is nil but SearchReindexClient.GetTask was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Headers  searchReindexSDK.Headers
+		JobID    string
+		TaskName string
+	}{
+		Ctx:      ctx,
+		Headers:  headers,
+		JobID:    jobID,
+		TaskName: taskName,
+	}
+	mock.lockGetTask.Lock()
+	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
+	mock.lockGetTask.Unlock()
+	return mock.GetTaskFunc(ctx, headers, jobID, taskName)
+}
+
+// GetTaskCalls gets all the calls that were made to GetTask.
+// Check the length with:
+//     len(mockedSearchReindexClient.GetTaskCalls())
+func (mock *SearchReindexClientMock) GetTaskCalls() []struct {
+	Ctx      context.Context
+	Headers  searchReindexSDK.Headers
+	JobID    string
+	TaskName string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Headers  searchReindexSDK.Headers
+		JobID    string
+		TaskName string
+	}
+	mock.lockGetTask.RLock()
+	calls = mock.calls.GetTask
+	mock.lockGetTask.RUnlock()
+	return calls
+}
+
 // Health calls HealthFunc.
 func (mock *SearchReindexClientMock) Health() *health.Client {
 	if mock.HealthFunc == nil {
@@ -182,7 +242,7 @@ func (mock *SearchReindexClientMock) HealthCalls() []struct {
 }
 
 // PatchJob calls PatchJobFunc.
-func (mock *SearchReindexClientMock) PatchJob(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (string, error) {
+func (mock *SearchReindexClientMock) PatchJob(contextMoqParam context.Context, headers searchReindexSDK.Headers, s string, patchOperations []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error) {
 	if mock.PatchJobFunc == nil {
 		panic("SearchReindexClientMock.PatchJobFunc: method is nil but SearchReindexClient.PatchJob was just called")
 	}
@@ -225,7 +285,7 @@ func (mock *SearchReindexClientMock) PatchJobCalls() []struct {
 }
 
 // PostJob calls PostJobFunc.
-func (mock *SearchReindexClientMock) PostJob(contextMoqParam context.Context, headers searchReindexSDK.Headers) (searchReindex.Job, error) {
+func (mock *SearchReindexClientMock) PostJob(contextMoqParam context.Context, headers searchReindexSDK.Headers) (*searchReindex.Job, error) {
 	if mock.PostJobFunc == nil {
 		panic("SearchReindexClientMock.PostJobFunc: method is nil but SearchReindexClient.PostJob was just called")
 	}
@@ -260,7 +320,7 @@ func (mock *SearchReindexClientMock) PostJobCalls() []struct {
 }
 
 // PostTasksCount calls PostTasksCountFunc.
-func (mock *SearchReindexClientMock) PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (searchReindex.Task, error) {
+func (mock *SearchReindexClientMock) PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error) {
 	if mock.PostTasksCountFunc == nil {
 		panic("SearchReindexClientMock.PostTasksCountFunc: method is nil but SearchReindexClient.PostTasksCount was just called")
 	}

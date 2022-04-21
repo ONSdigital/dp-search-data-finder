@@ -7,7 +7,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -47,19 +47,19 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 		return errors.New("the search reindex client in the reindex requested handler must not be nil")
 	}
 
-	headers := searchReindex.Headers{
+	headers := searchReindexSDK.Headers{
 		IfMatch:          "*",
 		ServiceAuthToken: h.Config.ServiceAuthToken,
 	}
 
-	patchList := make([]searchReindex.PatchOperation, 2)
-	statusOperation := searchReindex.PatchOperation{
+	patchList := make([]searchReindexSDK.PatchOperation, 2)
+	statusOperation := searchReindexSDK.PatchOperation{
 		Op:    "replace",
 		Path:  "/state",
 		Value: "in-progress",
 	}
 	patchList[0] = statusOperation
-	totalDocsOperation := searchReindex.PatchOperation{
+	totalDocsOperation := searchReindexSDK.PatchOperation{
 		Op:    "replace",
 		Path:  "/total_search_documents",
 		Value: totalZebedeeDocs,
@@ -72,11 +72,13 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 
 	log.Info(ctx, "patch list for request", logPatchList)
 
-	var respETag string
-	respETag, err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchList)
+	var respHeaders *searchReindexSDK.RespHeaders
+	respHeaders, err = h.SearchReindexCli.PatchJob(ctx, headers, event.JobID, patchList)
 	if err != nil {
 		return err
 	}
+	respETag := respHeaders.ETag
+
 	log.Info(ctx, "eTag returned in response:"+respETag)
 
 	log.Info(ctx, "event successfully handled", logData)

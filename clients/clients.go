@@ -23,8 +23,9 @@ type ZebedeeClient interface {
 type SearchReindexClient interface {
 	Checker(context.Context, *healthcheck.CheckState) error
 	Health() *health.Client
-	PatchJob(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (string, error)
-	PostJob(context.Context, searchReindexSDK.Headers) (searchReindex.Job, error)
-	PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (searchReindex.Task, error)
+	PatchJob(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error)
+	PostJob(context.Context, searchReindexSDK.Headers) (*searchReindex.Job, error)
+	PostTasksCount(ctx context.Context, headers searchReindexSDK.Headers, jobID string, payload []byte) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error)
+	GetTask(ctx context.Context, headers searchReindexSDK.Headers, jobID, taskName string) (*searchReindexSDK.RespHeaders, *searchReindex.Task, error)
 	URL() string
 }
