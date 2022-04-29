@@ -91,17 +91,15 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	}
 	patchJobRespETag := respHeaders.ETag
 
-    // Make a call to the client passing job id with request parameters
-//     noOfDocument := len(publishedItems)
-//     payload, err := h.GetPayload(ctx, noOfDocument, searchReindexSDK.TaskNames)
-//     if err != nil {
-//         log.Error(ctx, "getting payload failed", err)
-//     }
-    mockTaskToCreate := `{"task_name":"zebedee","number_of_documents": "10"}`
-    payload := []byte(mockTaskToCreate)
+	log.Info(ctx, "job state and total_search_documents were patched successfully")
+
+    taskToCreate := searchReindex.TaskToCreate{
+        TaskName:          zebedeeTaskName,
+        NumberOfDocuments: totalZebedeeDocs,
+    }
 
     var searchReindexTask *searchReindex.Task
-    respHeaders, searchReindexTask, err = h.SearchReindexCli.PostTasksCount(ctx, headers, jobID, payload)
+    respHeaders, searchReindexTask, err = h.SearchReindexCli.PostTask(ctx, headers, jobID, taskToCreate)
     if err != nil {
         return err
     }
