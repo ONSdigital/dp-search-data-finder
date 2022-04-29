@@ -8,6 +8,7 @@ import (
 	clientMock "github.com/ONSdigital/dp-search-data-finder/clients/mock"
 	"github.com/ONSdigital/dp-search-data-finder/handler"
 	"github.com/ONSdigital/dp-search-data-finder/models"
+	searchreindexmodels "github.com/ONSdigital/dp-search-reindex-api/models"
 	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
@@ -31,7 +32,7 @@ var (
 		return zebedeeclient.PublishedIndex{}, nil
 	}
 
-	errSearchReindex = errors.New("search reindex test error")
+	errSearchReindexAPI = errors.New("search reindex api test error")
 	patchJobFails    = func(context.Context, searchReindexSDK.Headers, string, []searchReindexSDK.PatchOperation) (*searchReindexSDK.RespHeaders, error) {
 		return &searchReindexSDK.RespHeaders{}, errSearchReindex
 	}
@@ -42,48 +43,123 @@ var (
 		}
 		return &respHeaders, nil
 	}
+
+	postTasksCountEmpty = func(ctx context.Context, headers searchReindexClient.Headers, jobID string, payload []byte) (searchreindexmodels.Task, error) {
+		return searchreindexmodels.Task{}, errSearchReindexAPI
+	}
+
+	postTasksCountFunc = func(ctx context.Context, headers searchReindexClient.Headers, jobID string, payload []byte) (searchreindexmodels.Task, error) {
+		return searchreindexmodels.Task{}, nil
+	}
 )
 
 func TestReindexRequestedHandler_Handle(t *testing.T) {
 	t.Parallel()
 	Convey("Given an event handler working successfully, and an event containing a URI", t, func() {
 		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-		var searchReindexMock = &clientMock.SearchReindexClientMock{PatchJobFunc: patchJobFunc}
-		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock,
-			SearchReindexCli: searchReindexMock}
+		var searchReindexMock = &clientMock.SearchReindexClientMock{PatchJobFunc: patchJobFunc, PostTasksCountFunc: postTasksCountFunc}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock, SearchReindexCli: SearchReindexMock}
 
 		Convey("When given a valid event", func() {
 			err := eventHandler.Handle(testCtx, &testEvent)
 
-			Convey("Then Zebedee is called 1 time with no error ", func() {
+			Convey("Then error is nil ", func() {
 				So(err, ShouldBeNil)
-
-				So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-				So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
 			})
 
-			Convey("And Search Reindex is called 1 time with no error ", func() {
-				So(err, ShouldBeNil)
+			Convey("Then Zebedee is called 1 time", func() {
+                So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
+                So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
+            })
 
-				So(searchReindexMock.PatchJobCalls(), ShouldNotBeEmpty)
-				So(searchReindexMock.PatchJobCalls(), ShouldHaveLength, 1)
-			})
+            Convey("And Search Reindex is called 2 times in total", func() {
+                So(searchReindexMock.PatchJobCalls(), ShouldNotBeEmpty)
+                So(searchReindexMock.PatchJobCalls(), ShouldHaveLength, 1)
+                So(SearchReindexMock.PostTasksCountCalls(), ShouldNotBeEmpty)
+                So(SearchReindexMock.PostTasksCountCalls(), ShouldHaveLength, 1)
+            })
 		})
 	})
 	Convey("Given an event handler not working successfully with Zebedee, and an event containing a jobId", t, func() {
 		var zebedeeMockInError = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexEmpty}
-		var searchReindexMock = &clientMock.SearchReindexClientMock{PatchJobFunc: patchJobFunc}
-		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMockInError, SearchReindexCli: searchReindexMock}
+		var searchReindexMock = &clientMock.SearchReindexClientMock{PatchJobFunc: patchJobFunc, PostTasksCountFunc: postTasksCountEmpty}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMockInError, SearchReindexCli: SearchReindexMock}
 
 		Convey("When given a valid event", func() {
 			err := eventHandler.Handle(testCtx, &testEvent)
 
-			Convey("Then Zebedee is called 1 time with the expected error", func() {
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, errZebedee.Error())
+            Convey("Then Zebedee is called 1 time with the expected error", func() {
+                So(err, ShouldNotBeNil)
+                So(err.Error(), ShouldEqual, errZebedee.Error())
 
-				So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-				So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldHaveLength, 1)
+                So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldNotBeEmpty)
+                So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldHaveLength, 1)
+            })
+
+            Convey("And so the handler returns and Search Reindex is not called", func() {
+                So(searchReindexMock.PatchJobCalls(), ShouldBeEmpty)
+                So(searchReindexMock.PatchJobCalls(), ShouldHaveLength, 0)
+                So(SearchReindexMock.PostTasksCountCalls(), ShouldNotBeEmpty)
+                So(SearchReindexMock.PostTasksCountCalls(), ShouldHaveLength, 0)
+            })
+		})
+	})
+}
+
+func TestGetPayloads(t *testing.T) {
+	t.Parallel()
+	Convey("Given an empty taskname", t, func() {
+		testTaskNames := map[string]string{}
+		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		var SearchReindexMock = &clientMock.SearchReindexClientMock{PostTasksCountFunc: postTasksCountFunc}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock, SearchReindexCli: SearchReindexMock}
+
+		Convey("When preparing the payload", func() {
+			payload, err := eventHandler.GetPayload(testCtx, 10, testTaskNames)
+
+			Convey("Then it should throws an error", func() {
+				So(err, ShouldNotBeNil)
+			})
+			Convey("And the payload is empty", func() {
+				So(payload, ShouldBeEmpty)
+			})
+		})
+	})
+	Convey("Given a valid taskname", t, func() {
+		testTaskNames := map[string]string{
+			"zebedee": "zebedee",
+		}
+		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		var SearchReindexMock = &clientMock.SearchReindexClientMock{PostTasksCountFunc: postTasksCountFunc}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock, SearchReindexCli: SearchReindexMock}
+
+		Convey("When preparing payloads", func() {
+			payload, err := eventHandler.GetPayload(testCtx, 10, testTaskNames)
+
+			Convey("Then it should not throws error", func() {
+				So(err, ShouldBeNil)
+			})
+			Convey("And the payload is not empty", func() {
+				So(payload, ShouldNotBeEmpty)
+			})
+		})
+	})
+	Convey("Given an invalid taskname", t, func() {
+		testTaskNames := map[string]string{
+			"invalidtask": "invalid",
+		}
+		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		var SearchReindexMock = &clientMock.SearchReindexClientMock{PostTasksCountFunc: postTasksCountFunc}
+		eventHandler := &handler.ReindexRequestedHandler{ZebedeeCli: zebedeeMock, SearchReindexCli: SearchReindexMock}
+
+		Convey("When preparing payloads", func() {
+			payload, err := eventHandler.GetPayload(testCtx, 10, testTaskNames)
+
+			Convey("Then it should throws error", func() {
+				So(err, ShouldNotBeNil)
+			})
+			Convey("Then it throws error", func() {
+				So(payload, ShouldBeEmpty)
 			})
 
 			Convey("And so the handler returns and Search Reindex is not called", func() {

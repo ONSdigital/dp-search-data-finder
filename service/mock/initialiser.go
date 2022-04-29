@@ -15,7 +15,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/service"
 )
 
-// Ensure, that InitialiserMock does implement service.Initialiser.
+// Ensure, that InitialiserMock does implement Initialiser.
 // If this is not the case, regenerate this file with moq.
 var _ service.Initialiser = &InitialiserMock{}
 

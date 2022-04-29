@@ -12,11 +12,10 @@ require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
 	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
-	github.com/ONSdigital/dp-kafka/v2 v2.5.0
 	github.com/ONSdigital/dp-kafka/v3 v3.3.2
+	github.com/ONSdigital/dp-net v1.4.1
 	github.com/ONSdigital/dp-net/v2 v2.4.0
 	github.com/ONSdigital/dp-search-reindex-api v0.17.0
-	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.5
 	github.com/gorilla/mux v1.8.0
@@ -31,10 +30,9 @@ require (
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.3.0 // indirect
-	github.com/ONSdigital/dp-net v1.4.1 // indirect
 	github.com/Shopify/sarama v1.32.0 // indirect
 	github.com/aws/aws-sdk-go v1.43.38 // indirect
-	github.com/chromedp/cdproto v0.0.0-20220321060548-7bc2623472b3 // indirect
+	github.com/chromedp/cdproto v0.0.0-20220408044303-8559a4e76b35 // indirect
 	github.com/chromedp/chromedp v0.8.0 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect

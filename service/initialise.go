@@ -16,21 +16,21 @@ import (
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
-	HealthCheck      bool
-	Init             Initialiser
-	KafkaConsumer    bool
-	SearchReindexCli bool
-	ZebedeeCli       bool
+	HealthCheck         bool
+	KafkaConsumer       bool
+	Init                Initialiser
+	ZebedeeCli          bool
+	SearchReindexAPICli bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
 func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
-		HealthCheck:      false,
-		Init:             initialiser,
-		KafkaConsumer:    false,
-		SearchReindexCli: false,
-		ZebedeeCli:       false,
+		HealthCheck:         false,
+		KafkaConsumer:       false,
+		Init:                initialiser,
+		ZebedeeCli:          false,
+		SearchReindexAPICli: false,
 	}
 }
 
@@ -96,7 +96,7 @@ func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dp
 	if err != nil {
 		return nil, err
 	}
-	e.SearchReindexCli = true
+	e.SearchReindexAPICli = true
 	return client, nil
 }
 
