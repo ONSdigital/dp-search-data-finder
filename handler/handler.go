@@ -29,7 +29,7 @@ type key int
 const keyRequestID key = iota
 
 // Handle takes a single event.
-func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.ReindexRequested) (err error) {
+func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.ReindexRequested) error {
 	logData := log.Data{
 		"event": event,
 	}
@@ -93,23 +93,23 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 
 	log.Info(ctx, "job state and total_search_documents were patched successfully")
 
-    taskToCreate := searchReindex.TaskToCreate{
-        TaskName:          zebedeeTaskName,
-        NumberOfDocuments: totalZebedeeDocs,
-    }
+	taskToCreate := searchReindex.TaskToCreate{
+		TaskName:          zebedeeTaskName,
+		NumberOfDocuments: totalZebedeeDocs,
+	}
 
-    var searchReindexTask *searchReindex.Task
-    respHeaders, searchReindexTask, err = h.SearchReindexCli.PostTask(ctx, headers, jobID, taskToCreate)
-    if err != nil {
-        return err
-    }
-    postTaskRespETag := respHeaders.ETag
+	var searchReindexTask *searchReindex.Task
+	respHeaders, searchReindexTask, err = h.SearchReindexCli.PostTask(ctx, headers, jobID, taskToCreate)
+	if err != nil {
+		return err
+	}
+	postTaskRespETag := respHeaders.ETag
 
-    logData = log.Data{
-        "Task":              searchReindexTask,
-        "ETag returned in patch job response:":           patchJobRespETag,
-        "ETag returned in post task response:":           postTaskRespETag,
-    }
+	logData = log.Data{
+		"Task":                                 searchReindexTask,
+		"ETag returned in patch job response:": patchJobRespETag,
+		"ETag returned in post task response:": postTaskRespETag,
+	}
 
 	log.Info(ctx, "event successfully handled", logData)
 	return nil

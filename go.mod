@@ -5,9 +5,6 @@ go 1.17
 // fix vulnerability: CVE-2020-15114 in etcd v3.3.13+incompatible
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
-// temporarily use local repo
-replace github.com/ONSdigital/dp-search-reindex-api v0.17.0 => /Users/cookel/EllasFiles/DpCodeRepos/dp-search-reindex-api
-
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
 	github.com/ONSdigital/dp-component-test v0.7.0
@@ -15,7 +12,7 @@ require (
 	github.com/ONSdigital/dp-kafka/v3 v3.3.2
 	github.com/ONSdigital/dp-net v1.4.1
 	github.com/ONSdigital/dp-net/v2 v2.4.0
-	github.com/ONSdigital/dp-search-reindex-api v0.17.0
+	github.com/ONSdigital/dp-search-reindex-api v0.19.0
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.5
 	github.com/gorilla/mux v1.8.0
