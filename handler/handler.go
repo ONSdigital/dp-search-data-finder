@@ -65,18 +65,16 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	}
 
 	patchList := make([]searchReindexSDK.PatchOperation, 2)
-	statusOperation := searchReindexSDK.PatchOperation{
+	patchList[0] = searchReindexSDK.PatchOperation{
 		Op:    "replace",
 		Path:  "/state",
 		Value: "in-progress",
 	}
-	patchList[0] = statusOperation
-	totalDocsOperation := searchReindexSDK.PatchOperation{
+	patchList[1] = searchReindexSDK.PatchOperation{
 		Op:    "replace",
 		Path:  "/total_search_documents",
 		Value: totalZebedeeDocs,
 	}
-	patchList[1] = totalDocsOperation
 
 	logPatchList := log.Data{
 		"patch list": patchList,

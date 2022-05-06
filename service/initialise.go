@@ -70,19 +70,6 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 	return s
 }
 
-// GetSearchReindex return Search Reindex client
-// func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config) searchReindexClient.Client {
-// 	client := e.Init.DoGetSearchReindexClient(cfg)
-// 	e.SearchReindexCli = true
-// 	return client
-// }
-
-// DoGetZebedeeClient gets and initialises the Search Reindex Client
-// func (e *Init) DoGetSearchReindexClient(cfg *config.Config) searchReindexClient.Client {
-// 	client := searchReindex.New(cfg.SearchReindexURL, cfg.ServiceAuthToken)
-// 	return client
-// }
-
 // GetZebedee return Zebedee client
 func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClient {
 	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
