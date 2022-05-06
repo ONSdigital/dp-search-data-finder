@@ -11,6 +11,7 @@ import (
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 )
 
@@ -78,7 +79,7 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 }
 
 // GetSearchReindex returns SearchReindex client
-func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
 	client, err := e.Init.DoGetSearchReindexClient(cfg, httpClient)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dp
 }
 
 // DoGetSearchReindexClient gets and initialises the SearchReindex Client
-func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
 	healthClient := apiclientshealth.NewClientWithClienter("dp-search-data-finder", cfg.SearchReindexURL, httpClient)
 	searchReindexClient, err := searchReindex.NewWithHealthClient(cfg.ServiceAuthToken, healthClient)
 	if err != nil {

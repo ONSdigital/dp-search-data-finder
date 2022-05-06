@@ -16,6 +16,8 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	serviceMock "github.com/ONSdigital/dp-search-data-finder/service/mock"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindexMocks "github.com/ONSdigital/dp-search-reindex-api/sdk/mocks"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -74,7 +76,7 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
-		searchReindexMock := &clientMock.SearchReindexClientMock{
+		searchReindexMock := &searchReindexMocks.ClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -94,7 +96,7 @@ func TestRun(t *testing.T) {
 			return zebedeeMock
 		}
 
-		funcDoGetSearchReindexClientOk := func(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+		funcDoGetSearchReindexClientOk := func(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
 			return searchReindexMock, nil
 		}
 
@@ -247,11 +249,11 @@ func TestClose(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
-		searchReindexClientMock := &clientMock.SearchReindexClientMock{
+		searchReindexClientMock := &searchReindexMocks.ClientMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
-		funcDoGetSearchReindexClientOk := func(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+		funcDoGetSearchReindexClientOk := func(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
 			return searchReindexClientMock, nil
 		}
 

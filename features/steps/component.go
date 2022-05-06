@@ -17,6 +17,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/ONSdigital/dp-search-data-finder/service/mock"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 	"github.com/pkg/errors"
 )
@@ -84,7 +85,7 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
-		DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error) {
+		DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
 			return &c.searchReindexClient, nil
 		},
 	}

@@ -9,6 +9,7 @@ import (
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 )
 
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
@@ -20,7 +21,7 @@ type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
-	DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (clients.SearchReindexClient, error)
+	DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error)
 	DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient
 }
 

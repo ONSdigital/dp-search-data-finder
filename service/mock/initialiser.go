@@ -5,17 +5,17 @@ package mock
 
 import (
 	"context"
-	"net/http"
-	"sync"
-
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	"net/http"
+	"sync"
 )
 
-// Ensure, that InitialiserMock does implement Initialiser.
+// Ensure, that InitialiserMock does implement service.Initialiser.
 // If this is not the case, regenerate this file with moq.
 var _ service.Initialiser = &InitialiserMock{}
 
@@ -34,7 +34,7 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 // 				panic("mock out the DoGetKafkaConsumer method")
 // 			},
-// 			DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dpHTTP.Clienter) (clients.SearchReindexClient, error) {
+// 			DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
 // 				panic("mock out the DoGetSearchReindexClient method")
 // 			},
 // 			DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
@@ -57,7 +57,7 @@ type InitialiserMock struct {
 	DoGetKafkaConsumerFunc func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 
 	// DoGetSearchReindexClientFunc mocks the DoGetSearchReindexClient method.
-	DoGetSearchReindexClientFunc func(cfg *config.Config, httpClient dpHTTP.Clienter) (clients.SearchReindexClient, error)
+	DoGetSearchReindexClientFunc func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error)
 
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
 	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
@@ -223,7 +223,7 @@ func (mock *InitialiserMock) DoGetKafkaConsumerCalls() []struct {
 }
 
 // DoGetSearchReindexClient calls DoGetSearchReindexClientFunc.
-func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (clients.SearchReindexClient, error) {
+func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
 	if mock.DoGetSearchReindexClientFunc == nil {
 		panic("InitialiserMock.DoGetSearchReindexClientFunc: method is nil but Initialiser.DoGetSearchReindexClient was just called")
 	}

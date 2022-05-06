@@ -20,7 +20,7 @@ const (
 // ReindexRequestedHandler is the handler for reindex requested messages.
 type ReindexRequestedHandler struct {
 	ZebedeeCli       clients.ZebedeeClient
-	SearchReindexCli clients.SearchReindexClient
+	SearchReindexCli searchReindexSDK.Client
 	Config           config.Config
 }
 
