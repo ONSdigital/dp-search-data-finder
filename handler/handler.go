@@ -112,28 +112,3 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	log.Info(ctx, "event successfully handled", logData)
 	return nil
 }
-
-func (h *ReindexRequestedHandler) GetPayload(ctx context.Context, noOfDocument int, m map[string]string) ([]byte, error) {
-	var task string
-	if len(m) == 0 {
-		return nil, errors.New("no tasks exists")
-	}
-
-	for key, value := range m {
-		if key != zebedeeTaskName {
-			log.Info(ctx, "invalid taskname", log.Data{
-				"taskvalue": task,
-			})
-			return nil, errors.New("invalid taskname")
-		}
-		task = value
-	}
-
-	payload := []byte(task)
-	payload = append(payload, byte(noOfDocument))
-	log.Info(ctx, "endpoint request params", log.Data{
-		"payload": string(payload),
-	})
-
-	return payload, nil
-}
