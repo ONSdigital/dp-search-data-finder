@@ -8,7 +8,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
@@ -66,7 +66,7 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
-	s := dphttp.NewServer(bindAddr, router)
+	s := dpHTTP.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
 	return s
 }
@@ -79,7 +79,7 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 }
 
 // GetSearchReindex returns SearchReindex client
-func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
+func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindexSDK.Client, error) {
 	client, err := e.Init.DoGetSearchReindexClient(cfg, httpClient)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dp
 }
 
 // DoGetSearchReindexClient gets and initialises the SearchReindex Client
-func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
+func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindexSDK.Client, error) {
 	healthClient := apiclientshealth.NewClientWithClienter("dp-search-data-finder", cfg.SearchReindexURL, httpClient)
 	searchReindexClient, err := searchReindex.NewWithHealthClient(cfg.ServiceAuthToken, healthClient)
 	if err != nil {
@@ -100,7 +100,9 @@ func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dphttp.Cl
 
 // DoGetZebedeeClient gets and initialises the Zebedee Client
 func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
-	zebedeeClient := zebedee.New(cfg.ZebedeeURL)
+	httpClient := dpHTTP.NewClient()
+	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
+	zebedeeClient := zebedee.NewClientWithClienter(cfg.ZebedeeURL, httpClient)
 	return zebedeeClient
 }
 
