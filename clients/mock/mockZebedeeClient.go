@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
-	"sync"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 	lockZebedeeClientMockGetPublishedIndex sync.RWMutex
 )
 
-// Ensure, that ZebedeeClientMock does implement clients.ZebedeeClient.
+// Ensure, that ZebedeeClientMock does implement ZebedeeClient.
 // If this is not the case, regenerate this file with moq.
 var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 

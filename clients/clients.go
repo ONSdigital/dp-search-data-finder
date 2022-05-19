@@ -7,7 +7,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
-//go:generate moq -out mock/zebedee.go -pkg mock . ZebedeeClient
+//go:generate moq -out mock/mockZebedeeClient.go -pkg mock . ZebedeeClient
 
 // ZebedeeClient defines the zebedee client
 type ZebedeeClient interface {

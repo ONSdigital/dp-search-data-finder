@@ -4,8 +4,9 @@
 package mock
 
 import (
-	"github.com/ONSdigital/dp-search-data-finder/event"
 	"sync"
+
+	"github.com/ONSdigital/dp-search-data-finder/event"
 )
 
 var (

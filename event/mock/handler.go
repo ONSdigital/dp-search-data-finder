@@ -5,9 +5,10 @@ package mock
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/models"
-	"sync"
 )
 
 var (

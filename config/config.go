@@ -17,7 +17,7 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	KafkaConfig                KafkaConfig
 	SearchReindexURL           string        `envconfig:"SEARCH_REINDEX_URL"`
-	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"`
+	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
 	ZebedeeClientTimeout       time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
 	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
 }

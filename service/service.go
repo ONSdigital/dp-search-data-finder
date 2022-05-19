@@ -5,6 +5,7 @@ import (
 	"time"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
@@ -37,7 +38,12 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	zebedeeClient := serviceList.GetZebedee(cfg)
 
 	// Get the search reindex client
-	searchReindexClient := serviceList.GetSearchReindex(cfg)
+	httpClient := dpHTTP.NewClient()
+	searchReindexClient, err := serviceList.GetSearchReindex(cfg, httpClient)
+	if err != nil {
+		log.Fatal(ctx, "could not initialise search reindex client", err)
+		return nil, err
+	}
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
@@ -48,7 +54,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		ZebedeeCli: zebedeeClient}
+		ZebedeeCli:       zebedeeClient,
+		SearchReindexCli: searchReindexClient,
+	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
 	if consumerStartErr := consumer.Start(); consumerStartErr != nil {

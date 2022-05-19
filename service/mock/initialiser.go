@@ -5,21 +5,14 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-kafka/v3"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
-	"github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"net/http"
 	"sync"
-)
-
-var (
-	lockInitialiserMockDoGetHTTPServer          sync.RWMutex
-	lockInitialiserMockDoGetHealthCheck         sync.RWMutex
-	lockInitialiserMockDoGetKafkaConsumer       sync.RWMutex
-	lockInitialiserMockDoGetSearchReindexClient sync.RWMutex
-	lockInitialiserMockDoGetZebedeeClient       sync.RWMutex
 )
 
 // Ensure, that InitialiserMock does implement service.Initialiser.
@@ -28,31 +21,31 @@ var _ service.Initialiser = &InitialiserMock{}
 
 // InitialiserMock is a mock implementation of service.Initialiser.
 //
-//     func TestSomethingThatUsesInitialiser(t *testing.T) {
+// 	func TestSomethingThatUsesInitialiser(t *testing.T) {
 //
-//         // make and configure a mocked service.Initialiser
-//         mockedInitialiser := &InitialiserMock{
-//             DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
-// 	               panic("mock out the DoGetHTTPServer method")
-//             },
-//             DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
-// 	               panic("mock out the DoGetHealthCheck method")
-//             },
-//             DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
-// 	               panic("mock out the DoGetKafkaConsumer method")
-//             },
-//             DoGetSearchReindexClientFunc: func(cfg *config.Config) sdk.Client {
-// 	               panic("mock out the DoGetSearchReindexClient method")
-//             },
-//             DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
-// 	               panic("mock out the DoGetZebedeeClient method")
-//             },
-//         }
+// 		// make and configure a mocked service.Initialiser
+// 		mockedInitialiser := &InitialiserMock{
+// 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
+// 				panic("mock out the DoGetHTTPServer method")
+// 			},
+// 			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+// 				panic("mock out the DoGetHealthCheck method")
+// 			},
+// 			DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
+// 				panic("mock out the DoGetKafkaConsumer method")
+// 			},
+// 			DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
+// 				panic("mock out the DoGetSearchReindexClient method")
+// 			},
+// 			DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
+// 				panic("mock out the DoGetZebedeeClient method")
+// 			},
+// 		}
 //
-//         // use mockedInitialiser in code that requires service.Initialiser
-//         // and then make assertions.
+// 		// use mockedInitialiser in code that requires service.Initialiser
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type InitialiserMock struct {
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
@@ -64,7 +57,7 @@ type InitialiserMock struct {
 	DoGetKafkaConsumerFunc func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 
 	// DoGetSearchReindexClientFunc mocks the DoGetSearchReindexClient method.
-	DoGetSearchReindexClientFunc func(cfg *config.Config) sdk.Client
+	DoGetSearchReindexClientFunc func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error)
 
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
 	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
@@ -100,6 +93,8 @@ type InitialiserMock struct {
 		DoGetSearchReindexClient []struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
+			// HttpClient is the httpClient argument value.
+			HttpClient dpHTTP.Clienter
 		}
 		// DoGetZebedeeClient holds details about calls to the DoGetZebedeeClient method.
 		DoGetZebedeeClient []struct {
@@ -107,6 +102,11 @@ type InitialiserMock struct {
 			Cfg *config.Config
 		}
 	}
+	lockDoGetHTTPServer          sync.RWMutex
+	lockDoGetHealthCheck         sync.RWMutex
+	lockDoGetKafkaConsumer       sync.RWMutex
+	lockDoGetSearchReindexClient sync.RWMutex
+	lockDoGetZebedeeClient       sync.RWMutex
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
@@ -121,9 +121,9 @@ func (mock *InitialiserMock) DoGetHTTPServer(bindAddr string, router http.Handle
 		BindAddr: bindAddr,
 		Router:   router,
 	}
-	lockInitialiserMockDoGetHTTPServer.Lock()
+	mock.lockDoGetHTTPServer.Lock()
 	mock.calls.DoGetHTTPServer = append(mock.calls.DoGetHTTPServer, callInfo)
-	lockInitialiserMockDoGetHTTPServer.Unlock()
+	mock.lockDoGetHTTPServer.Unlock()
 	return mock.DoGetHTTPServerFunc(bindAddr, router)
 }
 
@@ -138,9 +138,9 @@ func (mock *InitialiserMock) DoGetHTTPServerCalls() []struct {
 		BindAddr string
 		Router   http.Handler
 	}
-	lockInitialiserMockDoGetHTTPServer.RLock()
+	mock.lockDoGetHTTPServer.RLock()
 	calls = mock.calls.DoGetHTTPServer
-	lockInitialiserMockDoGetHTTPServer.RUnlock()
+	mock.lockDoGetHTTPServer.RUnlock()
 	return calls
 }
 
@@ -160,9 +160,9 @@ func (mock *InitialiserMock) DoGetHealthCheck(cfg *config.Config, buildTime stri
 		GitCommit: gitCommit,
 		Version:   version,
 	}
-	lockInitialiserMockDoGetHealthCheck.Lock()
+	mock.lockDoGetHealthCheck.Lock()
 	mock.calls.DoGetHealthCheck = append(mock.calls.DoGetHealthCheck, callInfo)
-	lockInitialiserMockDoGetHealthCheck.Unlock()
+	mock.lockDoGetHealthCheck.Unlock()
 	return mock.DoGetHealthCheckFunc(cfg, buildTime, gitCommit, version)
 }
 
@@ -181,9 +181,9 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 		GitCommit string
 		Version   string
 	}
-	lockInitialiserMockDoGetHealthCheck.RLock()
+	mock.lockDoGetHealthCheck.RLock()
 	calls = mock.calls.DoGetHealthCheck
-	lockInitialiserMockDoGetHealthCheck.RUnlock()
+	mock.lockDoGetHealthCheck.RUnlock()
 	return calls
 }
 
@@ -199,9 +199,9 @@ func (mock *InitialiserMock) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *c
 		Ctx:      ctx,
 		KafkaCfg: kafkaCfg,
 	}
-	lockInitialiserMockDoGetKafkaConsumer.Lock()
+	mock.lockDoGetKafkaConsumer.Lock()
 	mock.calls.DoGetKafkaConsumer = append(mock.calls.DoGetKafkaConsumer, callInfo)
-	lockInitialiserMockDoGetKafkaConsumer.Unlock()
+	mock.lockDoGetKafkaConsumer.Unlock()
 	return mock.DoGetKafkaConsumerFunc(ctx, kafkaCfg)
 }
 
@@ -216,40 +216,44 @@ func (mock *InitialiserMock) DoGetKafkaConsumerCalls() []struct {
 		Ctx      context.Context
 		KafkaCfg *config.KafkaConfig
 	}
-	lockInitialiserMockDoGetKafkaConsumer.RLock()
+	mock.lockDoGetKafkaConsumer.RLock()
 	calls = mock.calls.DoGetKafkaConsumer
-	lockInitialiserMockDoGetKafkaConsumer.RUnlock()
+	mock.lockDoGetKafkaConsumer.RUnlock()
 	return calls
 }
 
 // DoGetSearchReindexClient calls DoGetSearchReindexClientFunc.
-func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config) sdk.Client {
+func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
 	if mock.DoGetSearchReindexClientFunc == nil {
 		panic("InitialiserMock.DoGetSearchReindexClientFunc: method is nil but Initialiser.DoGetSearchReindexClient was just called")
 	}
 	callInfo := struct {
-		Cfg *config.Config
+		Cfg        *config.Config
+		HttpClient dpHTTP.Clienter
 	}{
-		Cfg: cfg,
+		Cfg:        cfg,
+		HttpClient: httpClient,
 	}
-	lockInitialiserMockDoGetSearchReindexClient.Lock()
+	mock.lockDoGetSearchReindexClient.Lock()
 	mock.calls.DoGetSearchReindexClient = append(mock.calls.DoGetSearchReindexClient, callInfo)
-	lockInitialiserMockDoGetSearchReindexClient.Unlock()
-	return mock.DoGetSearchReindexClientFunc(cfg)
+	mock.lockDoGetSearchReindexClient.Unlock()
+	return mock.DoGetSearchReindexClientFunc(cfg, httpClient)
 }
 
 // DoGetSearchReindexClientCalls gets all the calls that were made to DoGetSearchReindexClient.
 // Check the length with:
 //     len(mockedInitialiser.DoGetSearchReindexClientCalls())
 func (mock *InitialiserMock) DoGetSearchReindexClientCalls() []struct {
-	Cfg *config.Config
+	Cfg        *config.Config
+	HttpClient dpHTTP.Clienter
 } {
 	var calls []struct {
-		Cfg *config.Config
+		Cfg        *config.Config
+		HttpClient dpHTTP.Clienter
 	}
-	lockInitialiserMockDoGetSearchReindexClient.RLock()
+	mock.lockDoGetSearchReindexClient.RLock()
 	calls = mock.calls.DoGetSearchReindexClient
-	lockInitialiserMockDoGetSearchReindexClient.RUnlock()
+	mock.lockDoGetSearchReindexClient.RUnlock()
 	return calls
 }
 
@@ -263,9 +267,9 @@ func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config) clients.Zebe
 	}{
 		Cfg: cfg,
 	}
-	lockInitialiserMockDoGetZebedeeClient.Lock()
+	mock.lockDoGetZebedeeClient.Lock()
 	mock.calls.DoGetZebedeeClient = append(mock.calls.DoGetZebedeeClient, callInfo)
-	lockInitialiserMockDoGetZebedeeClient.Unlock()
+	mock.lockDoGetZebedeeClient.Unlock()
 	return mock.DoGetZebedeeClientFunc(cfg)
 }
 
@@ -278,8 +282,8 @@ func (mock *InitialiserMock) DoGetZebedeeClientCalls() []struct {
 	var calls []struct {
 		Cfg *config.Config
 	}
-	lockInitialiserMockDoGetZebedeeClient.RLock()
+	mock.lockDoGetZebedeeClient.RLock()
 	calls = mock.calls.DoGetZebedeeClient
-	lockInitialiserMockDoGetZebedeeClient.RUnlock()
+	mock.lockDoGetZebedeeClient.RUnlock()
 	return calls
 }

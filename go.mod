@@ -6,12 +6,13 @@ go 1.17
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.115.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
 	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v3 v3.3.2
-	github.com/ONSdigital/dp-net/v2 v2.2.0
-	github.com/ONSdigital/dp-search-reindex-api v0.17.0
+	github.com/ONSdigital/dp-net v1.4.1
+	github.com/ONSdigital/dp-net/v2 v2.4.0
+	github.com/ONSdigital/dp-search-reindex-api v0.19.0
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.5
 	github.com/gorilla/mux v1.8.0
@@ -26,9 +27,8 @@ require (
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.3.0 // indirect
-	github.com/ONSdigital/dp-net v1.4.1 // indirect
 	github.com/Shopify/sarama v1.32.0 // indirect
-	github.com/aws/aws-sdk-go v1.43.36 // indirect
+	github.com/aws/aws-sdk-go v1.43.38 // indirect
 	github.com/chromedp/cdproto v0.0.0-20220408044303-8559a4e76b35 // indirect
 	github.com/chromedp/chromedp v0.8.0 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20220221023154-0b2280d3ff96 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20220410123724-9e86199038b0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
@@ -77,10 +77,10 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921 // indirect
-	golang.org/x/net v0.0.0-20220407224826-aac1ed45d8e3 // indirect
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

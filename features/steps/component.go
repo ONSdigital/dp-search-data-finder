@@ -12,11 +12,12 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/ONSdigital/dp-search-data-finder/service/mock"
-	searchReindexClient "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 	"github.com/pkg/errors"
 )
@@ -84,8 +85,8 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
-		DoGetSearchReindexClientFunc: func(cfg *config.Config) searchReindexClient.Client {
-			return &c.searchReindexClient
+		DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
+			return &c.searchReindexClient, nil
 		},
 	}
 

@@ -4,7 +4,7 @@ import (
 	"github.com/ONSdigital/dp-kafka/v3/avro"
 )
 
-var contentUpdatedEvent = `{
+var contentUpdated = `{
   "type": "record",
   "name": "content-updated",
   "fields": [
@@ -19,7 +19,7 @@ var contentUpdatedEvent = `{
 
 // ContentUpdatedEvent is the Avro schema for Content Updated messages.
 var ContentUpdatedEvent = &avro.Schema{
-	Definition: contentUpdatedEvent,
+	Definition: contentUpdated,
 }
 
 var reindexRequestedEvent = `{
