@@ -65,20 +65,6 @@ func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
 	return
 }
 
-func (c *Component) searchReindexAPIStateWarning() (err error) {
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
-	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
-
-	return
-}
-
-func (c *Component) searchReindexAPIStateCritical() (err error) {
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
-	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
-
-	return
-}
-
 func (c *Component) iShouldReceiveTheFollowingHealthJSONResponse(expectedResponse *godog.DocString) error {
 	var healthResponse, expectedHealth HealthCheckTest
 
