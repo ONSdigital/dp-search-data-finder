@@ -116,7 +116,6 @@ func TestRun(t *testing.T) {
 				So(svcList.KafkaConsumer, ShouldBeFalse)
 				So(svcList.HealthCheck, ShouldBeFalse)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
-				So(svcList.SearchReindexAPICli, ShouldBeTrue)
 			})
 		})
 
@@ -137,7 +136,6 @@ func TestRun(t *testing.T) {
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeFalse)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
-				So(svcList.SearchReindexAPICli, ShouldBeTrue)
 			})
 		})
 
@@ -159,14 +157,12 @@ func TestRun(t *testing.T) {
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
-				So(svcList.SearchReindexAPICli, ShouldBeTrue)
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
-				So(len(hcMock.AddCheckCalls()), ShouldEqual, 3)
+				So(len(hcMock.AddCheckCalls()), ShouldEqual, 2)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
-				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "Search Reindex API")
 				So(len(initMock.DoGetHTTPServerCalls()), ShouldEqual, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:28000")
 				So(len(hcMock.StartCalls()), ShouldEqual, 1)
@@ -201,8 +197,7 @@ func TestRun(t *testing.T) {
 				So(svcList.HealthCheck, ShouldBeTrue)
 				So(svcList.KafkaConsumer, ShouldBeTrue)
 				So(svcList.ZebedeeCli, ShouldBeTrue)
-				So(svcList.SearchReindexAPICli, ShouldBeTrue)
-				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 3)
+				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 2)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Kafka consumer")
 				So(hcMockAddFail.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
 			})
