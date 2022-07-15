@@ -7,14 +7,12 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/models"
-	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
 type ReindexRequestedHandler struct {
 	ZebedeeCli       clients.ZebedeeClient
-	SearchReindexCli searchReindexSDK.Client
 	Config           config.Config
 }
 

@@ -55,7 +55,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
 		ZebedeeCli:       zebedeeClient,
-		SearchReindexCli: searchReindexClient,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
