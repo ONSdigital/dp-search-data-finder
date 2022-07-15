@@ -12,13 +12,10 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
 	"github.com/ONSdigital/dp-search-data-finder/service/mock"
-	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 	"github.com/pkg/errors"
 )
 
@@ -32,20 +29,18 @@ type state string
 var s state = "state"
 
 type Component struct {
-	APIFeature           *componenttest.APIFeature
-	cfg                  *config.Config
-	errorFeature         componenttest.ErrorFeature
-	errorChan            chan error
-	fakeSearchReindexAPI *SearchReindexFeature
-	fakeZebedee          *ZebedeeFeature
-	fakeKafkaConsumer    kafka.IConsumerGroup
-	HTTPServer           *http.Server
-	searchReindexClient  searchReindex.Client
-	serviceList          *service.ExternalServiceList
-	serviceRunning       bool
-	startTime            time.Time
-	svc                  *service.Service
-	zebedeeClient        clients.ZebedeeClient
+	APIFeature        *componenttest.APIFeature
+	cfg               *config.Config
+	errorFeature      componenttest.ErrorFeature
+	errorChan         chan error
+	fakeZebedee       *ZebedeeFeature
+	fakeKafkaConsumer kafka.IConsumerGroup
+	HTTPServer        *http.Server
+	serviceList       *service.ExternalServiceList
+	serviceRunning    bool
+	startTime         time.Time
+	svc               *service.Service
+	zebedeeClient     clients.ZebedeeClient
 }
 
 func NewSearchDataFinderComponent() (*Component, error) {
@@ -72,10 +67,6 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	c.cfg.ZebedeeURL = c.fakeZebedee.FakeAPI.ResolveURL("")
 	c.zebedeeClient = zebedeeclient.New(c.cfg.ZebedeeURL)
 
-	c.fakeSearchReindexAPI = NewSearchReindexFeature()
-	c.cfg.SearchReindexURL = c.fakeSearchReindexAPI.FakeAPI.ResolveURL("")
-	c.searchReindexClient = *searchReindex.New(c.cfg.SearchReindexURL, "")
-
 	initMock := &mock.InitialiserMock{
 		DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafkaConsumer kafka.IConsumerGroup, err error) {
 			return c.fakeKafkaConsumer, nil
@@ -85,13 +76,9 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
-		DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dphttp.Clienter) (searchReindexSDK.Client, error) {
-			return &c.searchReindexClient, nil
-		},
 	}
 
 	// Setup API health endpoints prior to starting component
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 200)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
 
 	// Setup healthcheck critical timeout and interval so tests can run faster then
@@ -125,13 +112,10 @@ func (c *Component) Close() error {
 		c.serviceRunning = false
 	}
 
-	c.fakeSearchReindexAPI.Close()
-
 	return nil
 }
 
 func (c *Component) Reset() (*Component, error) {
-	c.fakeSearchReindexAPI.Reset()
 	ctx := context.WithValue(context.Background(), s, "empty")
 	if err := c.fakeKafkaConsumer.Checker(ctx, healthcheck.NewCheckState("topic-test")); err != nil {
 		return c, err

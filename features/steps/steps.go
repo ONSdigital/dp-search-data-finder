@@ -61,7 +61,6 @@ func delayTimeByMilliSeconds(milliseconds string) (err error) {
 }
 
 func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 200)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
 	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 
@@ -69,7 +68,6 @@ func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
 }
 
 func (c *Component) searchReindexAPIStateWarning() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 429)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
 	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 
@@ -77,7 +75,6 @@ func (c *Component) searchReindexAPIStateWarning() (err error) {
 }
 
 func (c *Component) searchReindexAPIStateCritical() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 500)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
 	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 

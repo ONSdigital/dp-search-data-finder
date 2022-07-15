@@ -6,11 +6,9 @@ package mock
 import (
 	"context"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/service"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"net/http"
 	"sync"
 )
@@ -34,9 +32,6 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 // 				panic("mock out the DoGetKafkaConsumer method")
 // 			},
-// 			DoGetSearchReindexClientFunc: func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
-// 				panic("mock out the DoGetSearchReindexClient method")
-// 			},
 // 			DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 // 				panic("mock out the DoGetZebedeeClient method")
 // 			},
@@ -55,9 +50,6 @@ type InitialiserMock struct {
 
 	// DoGetKafkaConsumerFunc mocks the DoGetKafkaConsumer method.
 	DoGetKafkaConsumerFunc func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
-
-	// DoGetSearchReindexClientFunc mocks the DoGetSearchReindexClient method.
-	DoGetSearchReindexClientFunc func(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error)
 
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
 	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
@@ -89,24 +81,16 @@ type InitialiserMock struct {
 			// KafkaCfg is the kafkaCfg argument value.
 			KafkaCfg *config.KafkaConfig
 		}
-		// DoGetSearchReindexClient holds details about calls to the DoGetSearchReindexClient method.
-		DoGetSearchReindexClient []struct {
-			// Cfg is the cfg argument value.
-			Cfg *config.Config
-			// HttpClient is the httpClient argument value.
-			HttpClient dpHTTP.Clienter
-		}
 		// DoGetZebedeeClient holds details about calls to the DoGetZebedeeClient method.
 		DoGetZebedeeClient []struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
 		}
 	}
-	lockDoGetHTTPServer          sync.RWMutex
-	lockDoGetHealthCheck         sync.RWMutex
-	lockDoGetKafkaConsumer       sync.RWMutex
-	lockDoGetSearchReindexClient sync.RWMutex
-	lockDoGetZebedeeClient       sync.RWMutex
+	lockDoGetHTTPServer    sync.RWMutex
+	lockDoGetHealthCheck   sync.RWMutex
+	lockDoGetKafkaConsumer sync.RWMutex
+	lockDoGetZebedeeClient sync.RWMutex
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
@@ -219,41 +203,6 @@ func (mock *InitialiserMock) DoGetKafkaConsumerCalls() []struct {
 	mock.lockDoGetKafkaConsumer.RLock()
 	calls = mock.calls.DoGetKafkaConsumer
 	mock.lockDoGetKafkaConsumer.RUnlock()
-	return calls
-}
-
-// DoGetSearchReindexClient calls DoGetSearchReindexClientFunc.
-func (mock *InitialiserMock) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindex.Client, error) {
-	if mock.DoGetSearchReindexClientFunc == nil {
-		panic("InitialiserMock.DoGetSearchReindexClientFunc: method is nil but Initialiser.DoGetSearchReindexClient was just called")
-	}
-	callInfo := struct {
-		Cfg        *config.Config
-		HttpClient dpHTTP.Clienter
-	}{
-		Cfg:        cfg,
-		HttpClient: httpClient,
-	}
-	mock.lockDoGetSearchReindexClient.Lock()
-	mock.calls.DoGetSearchReindexClient = append(mock.calls.DoGetSearchReindexClient, callInfo)
-	mock.lockDoGetSearchReindexClient.Unlock()
-	return mock.DoGetSearchReindexClientFunc(cfg, httpClient)
-}
-
-// DoGetSearchReindexClientCalls gets all the calls that were made to DoGetSearchReindexClient.
-// Check the length with:
-//     len(mockedInitialiser.DoGetSearchReindexClientCalls())
-func (mock *InitialiserMock) DoGetSearchReindexClientCalls() []struct {
-	Cfg        *config.Config
-	HttpClient dpHTTP.Clienter
-} {
-	var calls []struct {
-		Cfg        *config.Config
-		HttpClient dpHTTP.Clienter
-	}
-	mock.lockDoGetSearchReindexClient.RLock()
-	calls = mock.calls.DoGetSearchReindexClient
-	mock.lockDoGetSearchReindexClient.RUnlock()
 	return calls
 }
 

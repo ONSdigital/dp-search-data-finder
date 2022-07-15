@@ -12,8 +12,8 @@ import (
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
 type ReindexRequestedHandler struct {
-	ZebedeeCli       clients.ZebedeeClient
-	Config           config.Config
+	ZebedeeCli clients.ZebedeeClient
+	Config     config.Config
 }
 
 type key int
