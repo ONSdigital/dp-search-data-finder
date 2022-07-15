@@ -41,8 +41,6 @@ type Check struct {
 func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I wait "([^"]*)" milliseconds`, delayTimeByMilliSeconds)
 	ctx.Step(`^all of the downstream services are healthy$`, c.allOfTheDownstreamServicesAreHealthy)
-	ctx.Step(`^the Search Reindex API is unhealthy with state warning`, c.searchReindexAPIStateWarning)
-	ctx.Step(`^the Search Reindex API is unhealthy with state critical`, c.searchReindexAPIStateCritical)
 	ctx.Step(`^I should receive the following health JSON response:$`, c.iShouldReceiveTheFollowingHealthJSONResponse)
 
 	ctx.Step(`^these reindex-requested events are consumed:$`, c.theseReindexrequestedEventsAreConsumed)

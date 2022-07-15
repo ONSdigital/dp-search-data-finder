@@ -28,12 +28,6 @@ Feature: Healthcheck endpoint should inform the health of service
                         "status":"OK",
                         "status_code":200,
                         "message":"zebedee is ok"
-                    },
-                    {
-                        "name":"Search Reindex API",
-                        "status":"OK",
-                        "status_code":200,
-                        "message":"dp-search-reindex-api is ok"
                     }
                 ]
             }
