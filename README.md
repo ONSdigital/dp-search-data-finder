@@ -36,8 +36,6 @@ An example event can be created using the helper script, `make produce`.
 | KAFKA_SEC_CLIENT_KEY          | _unset_                           | PEM for the client key ([kafka TLS doc])
 | KAFKA_SEC_SKIP_VERIFY         | false                             | ignores server certificate issues if `true` ([kafka TLS doc])
 | KAFKA_VERSION                 | "1.0.2"                           | The kafka version that this service expects to connect to
-| SEARCH_REINDEX_URL            | http://localhost:25700            | The URL to the search reindex api service
-| SERVICE_AUTH_TOKEN            | _unset_                           | This is required to identify the Search Data Finder when it uses the Search Reindex client
 | ZEBEDEE_CLIENT_TIMEOUT        | 30s                               | Time to wait for the zebedee client to respond to requests e.g. the published index request
 | ZEBEDEE_URL                   | http://localhost:8082             | The URL to zebedee
 
