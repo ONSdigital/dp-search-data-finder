@@ -4,34 +4,29 @@ import (
 	"context"
 	"net/http"
 
-	apiclientshealth "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
-	searchReindexSDK "github.com/ONSdigital/dp-search-reindex-api/sdk"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk/v1"
 )
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
-	HealthCheck         bool
-	KafkaConsumer       bool
-	Init                Initialiser
-	ZebedeeCli          bool
-	SearchReindexAPICli bool
+	HealthCheck   bool
+	KafkaConsumer bool
+	Init          Initialiser
+	ZebedeeCli    bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
 func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
-		HealthCheck:         false,
-		KafkaConsumer:       false,
-		Init:                initialiser,
-		ZebedeeCli:          false,
-		SearchReindexAPICli: false,
+		HealthCheck:   false,
+		KafkaConsumer: false,
+		Init:          initialiser,
+		ZebedeeCli:    false,
 	}
 }
 
@@ -76,26 +71,6 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
 	e.ZebedeeCli = true
 	return zebedeeClient
-}
-
-// GetSearchReindex returns SearchReindex client
-func (e *ExternalServiceList) GetSearchReindex(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindexSDK.Client, error) {
-	client, err := e.Init.DoGetSearchReindexClient(cfg, httpClient)
-	if err != nil {
-		return nil, err
-	}
-	e.SearchReindexAPICli = true
-	return client, nil
-}
-
-// DoGetSearchReindexClient gets and initialises the SearchReindex Client
-func (e *Init) DoGetSearchReindexClient(cfg *config.Config, httpClient dpHTTP.Clienter) (searchReindexSDK.Client, error) {
-	healthClient := apiclientshealth.NewClientWithClienter("dp-search-data-finder", cfg.SearchReindexURL, httpClient)
-	searchReindexClient, err := searchReindex.NewWithHealthClient(cfg.ServiceAuthToken, healthClient)
-	if err != nil {
-		return nil, err
-	}
-	return searchReindexClient, nil
 }
 
 // DoGetZebedeeClient gets and initialises the Zebedee Client

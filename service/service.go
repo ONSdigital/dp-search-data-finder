@@ -5,12 +5,10 @@ import (
 	"time"
 
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/handler"
-	searchReindex "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -37,14 +35,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg)
 
-	// Get the search reindex client
-	httpClient := dpHTTP.NewClient()
-	searchReindexClient, err := serviceList.GetSearchReindex(cfg, httpClient)
-	if err != nil {
-		log.Fatal(ctx, "could not initialise search reindex client", err)
-		return nil, err
-	}
-
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
 	if err != nil {
@@ -54,8 +44,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		ZebedeeCli:       zebedeeClient,
-		SearchReindexCli: searchReindexClient,
+		ZebedeeCli: zebedeeClient,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
@@ -71,7 +60,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, zebedeeClient, searchReindexClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, zebedeeClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -159,7 +148,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient, searchReindexClient searchReindex.Client) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
@@ -169,10 +158,6 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for Zebedee", err)
-	}
-	if err := hc.AddCheck("Search Reindex API", searchReindexClient.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for Search Reindex API", err)
 	}
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")

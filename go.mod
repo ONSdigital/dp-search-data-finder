@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dp-search-data-finder
 
-go 1.17
+go 1.18
 
 // fix vulnerability: CVE-2020-15114 in etcd v3.3.13+incompatible
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
@@ -12,7 +12,6 @@ require (
 	github.com/ONSdigital/dp-kafka/v3 v3.3.2
 	github.com/ONSdigital/dp-net v1.4.1
 	github.com/ONSdigital/dp-net/v2 v2.4.0
-	github.com/ONSdigital/dp-search-reindex-api v0.19.0
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.5
 	github.com/gorilla/mux v1.8.0
@@ -39,7 +38,6 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect

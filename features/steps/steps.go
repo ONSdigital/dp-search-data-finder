@@ -41,8 +41,6 @@ type Check struct {
 func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I wait "([^"]*)" milliseconds`, delayTimeByMilliSeconds)
 	ctx.Step(`^all of the downstream services are healthy$`, c.allOfTheDownstreamServicesAreHealthy)
-	ctx.Step(`^the Search Reindex API is unhealthy with state warning`, c.searchReindexAPIStateWarning)
-	ctx.Step(`^the Search Reindex API is unhealthy with state critical`, c.searchReindexAPIStateCritical)
 	ctx.Step(`^I should receive the following health JSON response:$`, c.iShouldReceiveTheFollowingHealthJSONResponse)
 
 	ctx.Step(`^these reindex-requested events are consumed:$`, c.theseReindexrequestedEventsAreConsumed)
@@ -61,23 +59,6 @@ func delayTimeByMilliSeconds(milliseconds string) (err error) {
 }
 
 func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 200)
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
-	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
-
-	return
-}
-
-func (c *Component) searchReindexAPIStateWarning() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 429)
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
-	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
-
-	return
-}
-
-func (c *Component) searchReindexAPIStateCritical() (err error) {
-	c.fakeSearchReindexAPI.setJSONResponseForGetHealth("/health", 500)
 	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
 	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 
