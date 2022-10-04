@@ -18,16 +18,16 @@ Feature: Healthcheck endpoint should inform the health of service
                 },
                 "checks":[
                     {
-                        "name":"Kafka consumer",
-                        "status":"OK",
-                        "status_code":0,
-                        "message":"OK"
-                    },
-                    {
-                        "name":"Zebedee",
+                        "name":"API router",
                         "status":"OK",
                         "status_code":200,
-                        "message":"zebedee is ok"
+                        "message":"api-router is ok"
+                    },
+                    {
+                        "name":"Kafka consumer",
+                        "status":"OK",
+                        "status_code":200,
+                        "message":"OK"
                     }
                 ]
             }

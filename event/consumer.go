@@ -29,7 +29,7 @@ func Consume(ctx context.Context, messageConsumer kafka.IConsumerGroup, handler 
 					log.Info(ctx, "closing event consumer loop because upstream channel is closed", log.Data{"worker_id": workerID})
 					return
 				}
-				messageCtx := context.Background()
+				messageCtx := message.Context()
 				processMessage(messageCtx, message, handler)
 				message.Release()
 			case <-messageConsumer.Channels().Closer:

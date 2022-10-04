@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	zebedeeclient "github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -33,7 +34,7 @@ type Component struct {
 	cfg               *config.Config
 	errorFeature      componenttest.ErrorFeature
 	errorChan         chan error
-	fakeZebedee       *ZebedeeFeature
+	fakeAPIRouter     *FakeAPI
 	fakeKafkaConsumer kafka.IConsumerGroup
 	HTTPServer        *http.Server
 	serviceList       *service.ExternalServiceList
@@ -63,23 +64,24 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	consumer.StartFunc = func() error { return nil }
 	c.fakeKafkaConsumer = consumer
 
-	c.fakeZebedee = NewZebedeeFeature()
-	c.cfg.ZebedeeURL = c.fakeZebedee.FakeAPI.ResolveURL("")
-	c.zebedeeClient = zebedeeclient.New(c.cfg.ZebedeeURL)
+	c.fakeAPIRouter = NewFakeAPI()
+	c.cfg.APIRouterURL = c.fakeAPIRouter.fakeHTTP.ResolveURL("")
+	c.zebedeeClient = zebedeeclient.New(c.cfg.APIRouterURL)
 
 	initMock := &mock.InitialiserMock{
 		DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafkaConsumer kafka.IConsumerGroup, err error) {
 			return c.fakeKafkaConsumer, nil
 		},
-		DoGetHealthCheckFunc: getHealthCheckOK,
-		DoGetHTTPServerFunc:  c.getHTTPServer,
-		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
+		DoGetHealthCheckFunc:  getHealthCheckOK,
+		DoGetHealthClientFunc: c.getHealthClientOK,
+		DoGetHTTPServerFunc:   c.getHTTPServer,
+		DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
 	}
 
 	// Setup API health endpoints prior to starting component
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
+	c.fakeAPIRouter.setJSONResponseForGetHealth(200)
 
 	// Setup healthcheck critical timeout and interval so tests can run faster then
 	// using the existing defaults or those set in local or remote environment
@@ -139,6 +141,18 @@ func getHealthCheckOK(cfg *config.Config, buildTime, gitCommit, version string) 
 	return &hc, nil
 }
 
+func (c *Component) getHealthClientOK(name, url string) *health.Client {
+	if name == "" || url == "" {
+		return nil
+	}
+
+	return &health.Client{
+		URL:    url,
+		Name:   name,
+		Client: c.fakeAPIRouter.getMockAPIHTTPClient(),
+	}
+}
+
 func (c *Component) getHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
@@ -157,7 +171,7 @@ func funcCheck(ctx context.Context, state *healthcheck.CheckState) error {
 			return err
 		}
 	} else {
-		if err := state.Update(healthcheck.StatusOK, "OK", 0); err != nil {
+		if err := state.Update(healthcheck.StatusOK, "OK", 200); err != nil {
 			return err
 		}
 	}
