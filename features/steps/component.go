@@ -48,8 +48,10 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	ctx := context.Background()
 
 	c := &Component{
-		HTTPServer: &http.Server{},
-		errorChan:  make(chan error),
+		HTTPServer: &http.Server{
+			ReadHeaderTimeout: 1 * time.Second,
+		},
+		errorChan: make(chan error),
 	}
 
 	cfg, err := config.Get()

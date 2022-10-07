@@ -64,7 +64,6 @@ linters:
     - ineffassign
     - nakedret
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert

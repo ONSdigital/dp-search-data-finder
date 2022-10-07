@@ -25,7 +25,9 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 
 	publishedIndex, err := h.ZebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
-		// the cfg.ZebedeeClientTimeout maybe needs to be increased
+		// cfg.ZebedeeClientTimeout may need to be increased
+		// Note that this call is to retrieve all published files on disk, this operation in Zebedee takes a long time to process and respond to caller (search data finder)
+		// Problem is that as more and more data/content is published, more data is stored on disk in Zebedee and hence the time to process will increase
 		return err
 	}
 

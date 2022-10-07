@@ -83,7 +83,7 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config, hcCli *health.Clien
 func (e *Init) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
 	httpClient := dpHTTP.NewClient()
 
-	// published index takes about 10s to return so add a bit more
+	// as of 06/10/2022 published index takes about 10s to return so add a bit more, this could increase or decrease in the future
 	httpClient.SetTimeout(cfg.ZebedeeClientTimeout)
 
 	// communicating to zebedee via api-router (hcCli.URL) with configurable client (httpClient)
