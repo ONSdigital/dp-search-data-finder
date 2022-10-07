@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
-	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/handler"
@@ -32,8 +32,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
+	// Get health client for api router
+	routerHealthClient := serviceList.GetHealthClient("api-router", cfg.APIRouterURL)
+
 	// Get the zebedee client
-	zebedeeClient := serviceList.GetZebedee(cfg)
+	zebedeeClient := serviceList.GetZebedee(cfg, routerHealthClient)
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
@@ -60,7 +63,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, zebedeeClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, routerHealthClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -148,19 +151,20 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, zebedeeClient clients.ZebedeeClient) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, routerHealthClient *health.Client) error {
 	hasErrors := false
 
+	if err := hc.AddCheck("API router", routerHealthClient.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for api-router", err)
+	}
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for Kafka", err)
-	}
-	if err := hc.AddCheck("Zebedee", zebedeeClient.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for Zebedee", err)
+		log.Error(ctx, "error adding check for kafka", err)
 	}
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
+
 	return nil
 }

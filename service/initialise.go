@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
@@ -59,6 +60,11 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 	return hc, nil
 }
 
+// GetHealthClient returns a healthclient for the provided URL
+func (e *ExternalServiceList) GetHealthClient(name, url string) *health.Client {
+	return e.Init.DoGetHealthClient(name, url)
+}
+
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dpHTTP.NewServer(bindAddr, router)
@@ -67,17 +73,22 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 }
 
 // GetZebedee return Zebedee client
-func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClient {
-	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
+func (e *ExternalServiceList) GetZebedee(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+	zebedeeClient := e.Init.DoGetZebedeeClient(cfg, hcCli)
 	e.ZebedeeCli = true
 	return zebedeeClient
 }
 
 // DoGetZebedeeClient gets and initialises the Zebedee Client
-func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
+func (e *Init) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
 	httpClient := dpHTTP.NewClient()
-	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
-	zebedeeClient := zebedee.NewClientWithClienter(cfg.ZebedeeURL, httpClient)
+
+	// as of 06/10/2022 published index takes about 10s to return so add a bit more, this could increase or decrease in the future
+	httpClient.SetTimeout(cfg.ZebedeeClientTimeout)
+
+	// communicating to zebedee via api-router (hcCli.URL) with configurable client (httpClient)
+	zebedeeClient := zebedee.NewClientWithClienter(hcCli.URL, httpClient)
+
 	return zebedeeClient
 }
 
@@ -91,7 +102,7 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaCon
 		KafkaVersion: &kafkaCfg.Version,
 		Offset:       &kafkaOffset,
 		Topic:        kafkaCfg.ReindexRequestedTopic,
-		GroupName:    kafkaCfg.ReindexRequestedGroup,
+		GroupName:    kafkaCfg.ConsumerGroup,
 		BrokerAddrs:  kafkaCfg.Brokers,
 	}
 	if kafkaCfg.SecProtocol == config.KafkaTLSProtocolFlag {
@@ -121,4 +132,9 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	}
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+// DoGetHealthClient creates a new Health Client for the provided name and url
+func (e *Init) DoGetHealthClient(name, url string) *health.Client {
+	return health.NewClient(name, url)
 }
