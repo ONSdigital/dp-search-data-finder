@@ -69,7 +69,6 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - whitespace
     - gocognit
     - prealloc
