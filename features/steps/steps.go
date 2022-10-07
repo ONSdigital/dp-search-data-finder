@@ -181,6 +181,11 @@ func (c *Component) sendToConsumer(e *models.ReindexRequested) error {
 		return err
 	}
 
-	c.fakeKafkaConsumer.Channels().Upstream <- kafkatest.NewMessage(bytes, 0)
+	newMessage, err := kafkatest.NewMessage(bytes, 0)
+	if err != nil {
+		return err
+	}
+
+	c.fakeKafkaConsumer.Channels().Upstream <- newMessage
 	return nil
 }

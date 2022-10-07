@@ -52,7 +52,11 @@ func TestConsume(t *testing.T) {
 		}
 
 		Convey("And a kafka message with the valid schema being sent to the Upstream channel", func() {
-			message := kafkatest.NewMessage(marshal(testEvent), 0)
+			message, err := kafkatest.NewMessage(marshal(testEvent), 0)
+			if err != nil {
+				t.Errorf("failed to create new message - err: %v", err)
+			}
+
 			mockConsumer.Channels().Upstream <- message
 			Convey("When consume message is called", func() {
 				handlerWg.Add(1)
@@ -73,8 +77,14 @@ func TestConsume(t *testing.T) {
 		})
 
 		Convey("And two kafka messages, one with a valid schema and one with an invalid schema", func() {
-			validMessage := kafkatest.NewMessage(marshal(testEvent), 1)
-			invalidMessage := kafkatest.NewMessage([]byte("invalid schema"), 0)
+			validMessage, err := kafkatest.NewMessage(marshal(testEvent), 1)
+			if err != nil {
+				t.Errorf("failed to create valid kafka message - err: %v", err)
+			}
+			invalidMessage, err := kafkatest.NewMessage([]byte("invalid schema"), 0)
+			if err != nil {
+				t.Errorf("failed to create invalid kafka message - err: %v", err)
+			}
 			mockConsumer.Channels().Upstream <- invalidMessage
 			mockConsumer.Channels().Upstream <- validMessage
 			Convey("When consume messages is called", func() {
@@ -103,7 +113,10 @@ func TestConsume(t *testing.T) {
 				defer handlerWg.Done()
 				return errHandler
 			}
-			message := kafkatest.NewMessage(marshal(testEvent), 0)
+			message, err := kafkatest.NewMessage(marshal(testEvent), 0)
+			if err != nil {
+				t.Errorf("failed to create new kafka message - err: %v", err)
+			}
 			mockConsumer.Channels().Upstream <- message
 			Convey("When consume message is called", func() {
 				handlerWg.Add(1)
