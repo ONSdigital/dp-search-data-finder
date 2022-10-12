@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
@@ -82,6 +83,7 @@ func getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICl
 	datasetChan := extractDatasets(ctx, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := retrieveDatasetEditions(ctx, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
 	datasetURLChan := getAndSendDatasetURLsFromLatestMetadata(ctx, datasetAPICli, editionChan, cfg.ServiceAuthToken)
+	// TODO - logExtractedDatasetURLs is temporary and should be replaced in the future
 	logExtractedDatasetURLs(ctx, datasetURLChan)
 }
 
@@ -174,8 +176,6 @@ func getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, datasetAPIClie
 					if err != nil {
 						continue
 					}
-					// TODO: The dataset url should be sent to the content-updated topic here in the future
-					// But for the time being, we are going to extract the urls and print them
 					url := metadata.DatasetLinks.LatestVersion.URL
 					datasetURLChan <- url
 				}
@@ -186,8 +186,12 @@ func getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, datasetAPIClie
 	return datasetURLChan
 }
 
+// TODO - logExtractedDatasetURLs is temporary.
+// The dataset url should be sent to the content-updated topic here in the future.
+// But for the time being, we are going to extract the urls and print them
 func logExtractedDatasetURLs(ctx context.Context, datasetURLChan chan string) {
 	urlList := make([]string, 0)
+	time.Sleep(1 * time.Second) // to allow other go-routines
 	for datasetURL := range datasetURLChan {
 		urlList = append(urlList, datasetURL)
 	}

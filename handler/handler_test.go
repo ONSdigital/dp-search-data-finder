@@ -47,16 +47,14 @@ var (
 )
 
 func TestReindexRequestedHandler_Handle(t *testing.T) {
-	t.Parallel()
-
 	testCfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error is: %v", err)
 	}
 
 	Convey("Given an event handler working successfully, and an event containing a URI", t, func() {
-		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-		var datasetAPIMock = &clientMock.DatasetAPIClientMock{
+		zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		datasetAPIMock := &clientMock.DatasetAPIClientMock{
 			GetDatasetsFunc:            getDatasetsOk,
 			GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
 			GetVersionMetadataFunc:     getVersionMetadataOk,
@@ -76,8 +74,8 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 	})
 
 	Convey("Given an event handler not working successfully with Zebedee, and an event containing a jobId", t, func() {
-		var zebedeeMockInError = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexEmpty}
-		var datasetAPIMock = &clientMock.DatasetAPIClientMock{
+		zebedeeMockInError := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexEmpty}
+		datasetAPIMock := &clientMock.DatasetAPIClientMock{
 			GetDatasetsFunc:            getDatasetsOk,
 			GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
 			GetVersionMetadataFunc:     getVersionMetadataOk,
@@ -97,8 +95,8 @@ func TestReindexRequestedHandler_Handle(t *testing.T) {
 	})
 
 	Convey("Given an event handler not working successfully with Dataset API, and an event containing a jobId", t, func() {
-		var zebedeeMock = &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-		var datasetAPIMockErr = &clientMock.DatasetAPIClientMock{GetDatasetsFunc: getDatasetsError}
+		zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		datasetAPIMockErr := &clientMock.DatasetAPIClientMock{GetDatasetsFunc: getDatasetsError}
 		eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMockErr}
 
 		Convey("When given a valid event", func() {
