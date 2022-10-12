@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
@@ -80,17 +79,20 @@ func getAndSendZebedeeDocsURL(ctx context.Context, zebedeeCli clients.ZebedeeCli
 }
 
 func getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient) {
-	datasetChan := extractDatasets(ctx, datasetAPICli, cfg.ServiceAuthToken)
-	editionChan := retrieveDatasetEditions(ctx, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
-	datasetURLChan := getAndSendDatasetURLsFromLatestMetadata(ctx, datasetAPICli, editionChan, cfg.ServiceAuthToken)
+	var wgDataset sync.WaitGroup
+	datasetChan := extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
+	editionChan := retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
+	datasetURLChan := getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
 	// TODO - logExtractedDatasetURLs is temporary and should be replaced in the future
-	logExtractedDatasetURLs(ctx, datasetURLChan)
+	logExtractedDatasetURLs(ctx, &wgDataset, datasetURLChan)
 }
 
-func extractDatasets(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
+func extractDatasets(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
 	datasetChan := make(chan dataset.Dataset)
+	wgDataset.Add(1)
 	go func() {
 		defer close(datasetChan)
+		defer wgDataset.Done()
 		var offset = 0
 		var totalDocs = 0
 		for {
@@ -121,10 +123,12 @@ func extractDatasets(ctx context.Context, datasetAPIClient clients.DatasetAPICli
 	return datasetChan
 }
 
-func retrieveDatasetEditions(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, datasetChan chan dataset.Dataset, serviceAuthToken string) chan DatasetEditionMetadata {
+func retrieveDatasetEditions(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, datasetChan chan dataset.Dataset, serviceAuthToken string) chan DatasetEditionMetadata {
 	editionMetadataChan := make(chan DatasetEditionMetadata)
+	wgDataset.Add(1)
 	go func() {
 		defer close(editionMetadataChan)
+		defer wgDataset.Done()
 		noOfConcurrentExtractions := getNoOfConcurrentExtractions(len(datasetChan), maxConcurrentExtractions)
 		var wg sync.WaitGroup
 		for i := 0; i < noOfConcurrentExtractions; i++ {
@@ -156,15 +160,18 @@ func retrieveDatasetEditions(ctx context.Context, datasetAPIClient clients.Datas
 				}
 			}()
 		}
+
 		wg.Wait()
 	}()
 	return editionMetadataChan
 }
 
-func getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, editionMetadata chan DatasetEditionMetadata, serviceAuthToken string) chan string {
+func getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, editionMetadata chan DatasetEditionMetadata, serviceAuthToken string) chan string {
 	datasetURLChan := make(chan string)
+	wgDataset.Add(1)
 	go func() {
 		defer close(datasetURLChan)
+		defer wgDataset.Done()
 		var wg sync.WaitGroup
 		noOfConcurrentExtractions := getNoOfConcurrentExtractions(len(editionMetadata), maxConcurrentExtractions)
 		for i := 0; i < noOfConcurrentExtractions; i++ {
@@ -189,9 +196,10 @@ func getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, datasetAPIClie
 // TODO - logExtractedDatasetURLs is temporary.
 // The dataset url should be sent to the content-updated topic here in the future.
 // But for the time being, we are going to extract the urls and print them
-func logExtractedDatasetURLs(ctx context.Context, datasetURLChan chan string) {
+func logExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, datasetURLChan chan string) {
+	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
+
 	urlList := make([]string, 0)
-	time.Sleep(1 * time.Second) // to allow other go-routines
 	for datasetURL := range datasetURLChan {
 		urlList = append(urlList, datasetURL)
 	}
