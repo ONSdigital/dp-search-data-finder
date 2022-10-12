@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	datasetclient "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	zebedeeclient "github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	componenttest "github.com/ONSdigital/dp-component-test"
@@ -42,6 +43,7 @@ type Component struct {
 	startTime         time.Time
 	svc               *service.Service
 	zebedeeClient     clients.ZebedeeClient
+	datasetAPIClient  clients.DatasetAPIClient
 }
 
 func NewSearchDataFinderComponent() (*Component, error) {
@@ -69,6 +71,7 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	c.fakeAPIRouter = NewFakeAPI()
 	c.cfg.APIRouterURL = c.fakeAPIRouter.fakeHTTP.ResolveURL("")
 	c.zebedeeClient = zebedeeclient.New(c.cfg.APIRouterURL)
+	c.datasetAPIClient = datasetclient.NewAPIClient(c.cfg.APIRouterURL)
 
 	initMock := &mock.InitialiserMock{
 		DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafkaConsumer kafka.IConsumerGroup, err error) {
@@ -79,6 +82,9 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetHTTPServerFunc:   c.getHTTPServer,
 		DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
 			return c.zebedeeClient
+		},
+		DoGetDatasetAPIClientFunc: func(hcCli *health.Client) clients.DatasetAPIClient {
+			return c.datasetAPIClient
 		},
 	}
 

@@ -22,6 +22,7 @@ type Initialiser interface {
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 	DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient
+	DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient
 }
 
 // HTTPServer defines the required methods from the HTTP server

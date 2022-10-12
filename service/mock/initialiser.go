@@ -24,6 +24,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 // 		// make and configure a mocked service.Initialiser
 // 		mockedInitialiser := &InitialiserMock{
+// 			DoGetDatasetAPIClientFunc: func(hcCli *health.Client) clients.DatasetAPIClient {
+// 				panic("mock out the DoGetDatasetAPIClient method")
+// 			},
 // 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
 // 				panic("mock out the DoGetHTTPServer method")
 // 			},
@@ -46,6 +49,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 // 	}
 type InitialiserMock struct {
+	// DoGetDatasetAPIClientFunc mocks the DoGetDatasetAPIClient method.
+	DoGetDatasetAPIClientFunc func(hcCli *health.Client) clients.DatasetAPIClient
+
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
 
@@ -63,6 +69,11 @@ type InitialiserMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DoGetDatasetAPIClient holds details about calls to the DoGetDatasetAPIClient method.
+		DoGetDatasetAPIClient []struct {
+			// HcCli is the hcCli argument value.
+			HcCli *health.Client
+		}
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
 		DoGetHTTPServer []struct {
 			// BindAddr is the bindAddr argument value.
@@ -103,11 +114,43 @@ type InitialiserMock struct {
 			HcCli *health.Client
 		}
 	}
-	lockDoGetHTTPServer    sync.RWMutex
-	lockDoGetHealthCheck   sync.RWMutex
-	lockDoGetHealthClient  sync.RWMutex
-	lockDoGetKafkaConsumer sync.RWMutex
-	lockDoGetZebedeeClient sync.RWMutex
+	lockDoGetDatasetAPIClient sync.RWMutex
+	lockDoGetHTTPServer       sync.RWMutex
+	lockDoGetHealthCheck      sync.RWMutex
+	lockDoGetHealthClient     sync.RWMutex
+	lockDoGetKafkaConsumer    sync.RWMutex
+	lockDoGetZebedeeClient    sync.RWMutex
+}
+
+// DoGetDatasetAPIClient calls DoGetDatasetAPIClientFunc.
+func (mock *InitialiserMock) DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient {
+	if mock.DoGetDatasetAPIClientFunc == nil {
+		panic("InitialiserMock.DoGetDatasetAPIClientFunc: method is nil but Initialiser.DoGetDatasetAPIClient was just called")
+	}
+	callInfo := struct {
+		HcCli *health.Client
+	}{
+		HcCli: hcCli,
+	}
+	mock.lockDoGetDatasetAPIClient.Lock()
+	mock.calls.DoGetDatasetAPIClient = append(mock.calls.DoGetDatasetAPIClient, callInfo)
+	mock.lockDoGetDatasetAPIClient.Unlock()
+	return mock.DoGetDatasetAPIClientFunc(hcCli)
+}
+
+// DoGetDatasetAPIClientCalls gets all the calls that were made to DoGetDatasetAPIClient.
+// Check the length with:
+//     len(mockedInitialiser.DoGetDatasetAPIClientCalls())
+func (mock *InitialiserMock) DoGetDatasetAPIClientCalls() []struct {
+	HcCli *health.Client
+} {
+	var calls []struct {
+		HcCli *health.Client
+	}
+	mock.lockDoGetDatasetAPIClient.RLock()
+	calls = mock.calls.DoGetDatasetAPIClient
+	mock.lockDoGetDatasetAPIClient.RUnlock()
+	return calls
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.

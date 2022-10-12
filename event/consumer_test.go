@@ -2,7 +2,6 @@ package event_test
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 
@@ -18,8 +17,6 @@ import (
 
 var (
 	testCtx = context.Background()
-
-	errHandler = errors.New("handler error")
 
 	testEvent = models.ReindexRequested{
 		JobID:       "job id",
@@ -45,9 +42,8 @@ func TestConsume(t *testing.T) {
 
 		handlerWg := &sync.WaitGroup{}
 		mockEventHandler := &mock.HandlerMock{
-			HandleFunc: func(ctx context.Context, event *models.ReindexRequested) error {
+			HandleFunc: func(ctx context.Context, event *models.ReindexRequested) {
 				defer handlerWg.Done()
-				return nil
 			},
 		}
 
@@ -109,10 +105,6 @@ func TestConsume(t *testing.T) {
 		})
 
 		Convey("With a failing handler and a kafka message with the valid schema being sent to the Upstream channel", func() {
-			mockEventHandler.HandleFunc = func(ctx context.Context, event *models.ReindexRequested) error {
-				defer handlerWg.Done()
-				return errHandler
-			}
 			message, err := kafkatest.NewMessage(marshal(testEvent), 0)
 			if err != nil {
 				t.Errorf("failed to create new kafka message - err: %v", err)

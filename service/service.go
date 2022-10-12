@@ -38,6 +38,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Get the zebedee client
 	zebedeeClient := serviceList.GetZebedee(cfg, routerHealthClient)
 
+	// Get dataset-api client
+	datasetAPIClient := serviceList.GetDatasetAPI(routerHealthClient)
+
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
 	if err != nil {
@@ -47,7 +50,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		ZebedeeCli: zebedeeClient,
+		Config:        cfg,
+		ZebedeeCli:    zebedeeClient,
+		DatasetAPICli: datasetAPIClient,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
