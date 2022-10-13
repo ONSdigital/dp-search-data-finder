@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	datasetCli "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -19,6 +20,7 @@ type ExternalServiceList struct {
 	KafkaConsumer bool
 	Init          Initialiser
 	ZebedeeCli    bool
+	DatasetAPICli bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -28,6 +30,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 		KafkaConsumer: false,
 		Init:          initialiser,
 		ZebedeeCli:    false,
+		DatasetAPICli: false,
 	}
 }
 
@@ -79,6 +82,13 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config, hcCli *health.Clien
 	return zebedeeClient
 }
 
+// GetDatasetAPI return dataset-api client
+func (e *ExternalServiceList) GetDatasetAPI(hcCli *health.Client) clients.DatasetAPIClient {
+	datasetAPIClient := e.Init.DoGetDatasetAPIClient(hcCli)
+	e.DatasetAPICli = true
+	return datasetAPIClient
+}
+
 // DoGetZebedeeClient gets and initialises the Zebedee Client
 func (e *Init) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
 	httpClient := dpHTTP.NewClient()
@@ -90,6 +100,12 @@ func (e *Init) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clie
 	zebedeeClient := zebedee.NewClientWithClienter(hcCli.URL, httpClient)
 
 	return zebedeeClient
+}
+
+// DoGetDatasetAPIClient gets and initialises the dataset-api Client
+func (e *Init) DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient {
+	datasetAPIClient := datasetCli.NewWithHealthClient(hcCli)
+	return datasetAPIClient
 }
 
 // DoGetKafkaConsumer returns a Kafka Consumer group

@@ -15,7 +15,7 @@ import (
 
 // Handler represents a handler for processing a single event.
 type Handler interface {
-	Handle(ctx context.Context, reindexRequested *models.ReindexRequested) error
+	Handle(ctx context.Context, reindexRequested *models.ReindexRequested)
 }
 
 // Consume converts messages to event instances, and pass the event to the provided handler.
@@ -60,12 +60,7 @@ func processMessage(ctx context.Context, message kafka.Message, handler Handler)
 	log.Info(ctx, "event received", log.Data{"event": event})
 
 	// handle - commit on failure (implement error handling to not commit if message needs to be consumed again)
-	err = handler.Handle(ctx, event)
-	if err != nil {
-		log.Error(ctx, "failed to handle event", err)
-		message.Commit()
-		return
-	}
+	handler.Handle(ctx, event)
 
 	log.Info(ctx, "event processed - committing message", log.Data{"event": event})
 	message.Commit()

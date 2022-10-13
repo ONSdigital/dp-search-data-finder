@@ -48,3 +48,7 @@ func (f *FakeAPI) setJSONResponseForGetHealth(statusCode int) {
 func (f *FakeAPI) setJSONResponseForGetPublishIndex(statusCode int) {
 	f.fakeHTTP.NewHandler().Get("/publishedindex").Reply(statusCode).BodyString(`{}`)
 }
+
+func (f *FakeAPI) setJSONResponseForGetDatasets(statusCode int) {
+	f.fakeHTTP.NewHandler().Get("/datasets").Reply(statusCode).BodyString(`{}`)
+}

@@ -45,11 +45,15 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`^these reindex-requested events are consumed:$`, c.theseReindexrequestedEventsAreConsumed)
 	ctx.Step(`^I should receive a reindex-requested response$`, c.iShouldReceiveAReindexrequestedResponse)
+	ctx.Step(`^the URLs of zebedee and dataset documents are retrieved successfully$`, c.nothingHappens)
 
 	ctx.Step(`^get published-index request to zebedee is successful$`, c.getPublishedIndexRequestToZebedeeIsSuccessful)
 	ctx.Step(`^get published-index request to zebedee is unsuccessful$`, c.getPublishedIndexRequestToZebedeeIsUnsuccessful)
-	ctx.Step(`^the URLs of zebedee documents are retrieved successfully$`, c.nothingHappens)
 	ctx.Step(`^the URLs of zebedee documents are not retrieved$`, c.nothingHappens)
+
+	ctx.Step(`^get requests to dataset-api is successful$`, c.getRequestsToDatasetapiIsSuccessful)
+	ctx.Step(`^get requests to dataset-api is unsuccessful$`, c.getRequestsToDatasetapiIsUnsuccessful)
+	ctx.Step(`^the URLs of dataset documents are not retrieved$`, c.nothingHappens)
 }
 
 // delayTimeByMilliSeconds pauses the goroutine for the given seconds
@@ -76,6 +80,14 @@ func (c *Component) getPublishedIndexRequestToZebedeeIsSuccessful() {
 
 func (c *Component) getPublishedIndexRequestToZebedeeIsUnsuccessful() {
 	c.fakeAPIRouter.setJSONResponseForGetPublishIndex(500)
+}
+
+func (c *Component) getRequestsToDatasetapiIsSuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetDatasets(200)
+}
+
+func (c *Component) getRequestsToDatasetapiIsUnsuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetDatasets(500)
 }
 
 func (c *Component) iShouldReceiveTheFollowingHealthJSONResponse(expectedResponse *godog.DocString) error {
