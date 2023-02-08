@@ -14,10 +14,14 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 )
 
+// KafkaTLSProtocolFlag informs service to use TLS protocol for kafka
+const KafkaTLSProtocolFlag = "TLS"
+
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaConsumer bool
+	KafkaProducer bool
 	Init          Initialiser
 	ZebedeeCli    bool
 	DatasetAPICli bool
@@ -28,6 +32,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
 		HealthCheck:   false,
 		KafkaConsumer: false,
+		KafkaProducer: false,
 		Init:          initialiser,
 		ZebedeeCli:    false,
 		DatasetAPICli: false,
@@ -138,6 +143,39 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaCon
 	}
 
 	return kafkaConsumer, nil
+}
+
+// GetKafkaProducer creates a Kafka producer and sets the producder flag to true
+func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	producer, err := e.Init.DoGetKafkaProducer(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.KafkaProducer = true
+	return producer, nil
+}
+
+func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	pConfig := &dpkafka.ProducerConfig{
+		KafkaVersion: &cfg.KafkaConfig.Version,
+		Topic:        cfg.KafkaConfig.ContentUpdatedTopic,
+		BrokerAddrs:  cfg.KafkaConfig.Brokers,
+	}
+
+	if cfg.KafkaConfig.SecProtocol == KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = dpkafka.GetSecurityConfig(
+			cfg.KafkaConfig.SecCACerts,
+			cfg.KafkaConfig.SecClientCert,
+			cfg.KafkaConfig.SecClientKey,
+			cfg.KafkaConfig.SecSkipVerify,
+		)
+	}
+	producer, err := dpkafka.NewProducer(ctx, pConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return producer, nil
 }
 
 // DoGetHealthCheck creates a healthcheck with versionInfo

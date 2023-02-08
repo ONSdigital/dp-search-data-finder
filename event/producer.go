@@ -24,8 +24,8 @@ type ContentUpdatedProducer struct {
 
 // ContentUpdate produce a kafka message for an instance which has been successfully processed.
 func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
-	if cfg.ContentUpdatedTopicFlag {
-		log.Info(ctx, "ContentUpdatedTopic Flag is enabled")
+	if cfg.EnablePublishContentUpdatedTopic {
+		log.Info(ctx, "EnablePublishContentUpdatedTopic Flag is enabled")
 		eventBytes, err := p.Marshaller.Marshal(event)
 		if err != nil {
 			log.Fatal(ctx, "failed to marshal event", err)
@@ -35,7 +35,7 @@ func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, cfg *config.C
 		p.Producer.Channels().Output <- eventBytes
 		log.Info(ctx, "event produced successfully", log.Data{"event": event, "package": "event.ContentUpdate"})
 	} else {
-		log.Info(ctx, "ContentUpdatedTopic Flag is disabled")
+		log.Info(ctx, "EnablePublishContentUpdatedTopic Flag is disabled")
 	}
 	return nil
 }

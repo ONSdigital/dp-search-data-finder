@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
@@ -48,11 +49,24 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
+	// Get Kafka producer
+	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
+
+	contentUpdatedProducer := event.ContentUpdatedProducer{
+		Marshaller: schema.ContentUpdatedEvent,
+		Producer:   producer,
+	}
+
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
 		Config:        cfg,
 		ZebedeeCli:    zebedeeClient,
 		DatasetAPICli: datasetAPIClient,
+		Producer:      contentUpdatedProducer,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)

@@ -21,6 +21,7 @@ type Initialiser interface {
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
+	DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 	DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient
 	DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient
 }

@@ -10,15 +10,16 @@ const KafkaTLSProtocolFlag = "TLS"
 
 // Config represents service configuration for dp-search-data-finder
 type Config struct {
-	APIRouterURL               string        `envconfig:"API_ROUTER_URL"`
-	BindAddr                   string        `envconfig:"BIND_ADDR"`
-	ContentUpdatedTopicFlag    bool          `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
-	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
-	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
-	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
-	KafkaConfig                KafkaConfig
-	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
-	ZebedeeClientTimeout       time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
+	APIRouterURL                     string        `envconfig:"API_ROUTER_URL"`
+	BindAddr                         string        `envconfig:"BIND_ADDR"`
+	ContentUpdatedTopicFlag          bool          `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
+	GracefulShutdownTimeout          time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
+	HealthCheckCriticalTimeout       time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	HealthCheckInterval              time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
+	KafkaConfig                      KafkaConfig
+	ServiceAuthToken                 string        `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	ZebedeeClientTimeout             time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
+	EnablePublishContentUpdatedTopic bool          `envconfig:"ENABLE_PUBLISH_CONTENT_UPDATED_TOPIC"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -47,12 +48,13 @@ func Get() (*Config, error) {
 	}
 
 	cfg = &Config{
-		APIRouterURL:               "http://localhost:23200/v1",
-		BindAddr:                   "localhost:28000",
-		ContentUpdatedTopicFlag:    false,
-		GracefulShutdownTimeout:    5 * time.Second,
-		HealthCheckCriticalTimeout: 90 * time.Second,
-		HealthCheckInterval:        30 * time.Second,
+		APIRouterURL:                     "http://localhost:23200/v1",
+		BindAddr:                         "localhost:28000",
+		ContentUpdatedTopicFlag:          false,
+		EnablePublishContentUpdatedTopic: false,
+		GracefulShutdownTimeout:          5 * time.Second,
+		HealthCheckCriticalTimeout:       90 * time.Second,
+		HealthCheckInterval:              30 * time.Second,
 		KafkaConfig: KafkaConfig{
 			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 			ContentUpdatedTopic:   "content-updated",

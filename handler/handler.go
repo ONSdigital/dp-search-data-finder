@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ONSdigital/dp-search-data-finder/event"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-search-data-finder/clients"
 	"github.com/ONSdigital/dp-search-data-finder/config"
@@ -26,6 +28,7 @@ type DatasetEditionMetadata struct {
 type ReindexRequestedHandler struct {
 	ZebedeeCli    clients.ZebedeeClient
 	DatasetAPICli clients.DatasetAPIClient
+	Producer      event.ContentUpdatedProducer
 	Config        *config.Config
 }
 
@@ -42,18 +45,18 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		getAndSendZebedeeDocsURL(ctx, h.ZebedeeCli)
+		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, event)
 	}()
 	go func() {
 		defer wg.Done()
-		getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli)
+		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, event)
 	}()
 	wg.Wait()
 
 	log.Info(ctx, "event successfully handled", logData)
 }
 
-func getAndSendZebedeeDocsURL(ctx context.Context, zebedeeCli clients.ZebedeeClient) {
+func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, event *models.ReindexRequested) {
 	publishedIndex, err := zebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
 		// cfg.ZebedeeClientTimeout may need to be increased
@@ -71,14 +74,19 @@ func getAndSendZebedeeDocsURL(ctx context.Context, zebedeeCli clients.ZebedeeCli
 	// it takes more than 10 mins to retrieve all document urls from zebedee
 	// TODO: remove (i < 10) condition when this app has been completely implemented
 	for i := 0; (i < 10) && (i < totalZebedeeDocs); i++ {
-		urlList[i] = publishedItems[i].URI
+		h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
+			URI:         publishedIndex.Items[i].URI,
+			JobID:       event.JobID,
+			TraceID:     event.TraceID,
+			SearchIndex: event.SearchIndex,
+		})
 	}
 
 	log.Info(ctx, "first 10 Zebedee docs URLs retrieved", log.Data{"first URLs": urlList})
 	log.Info(ctx, "total number of zebedee docs retrieved", log.Data{"total_documents": totalZebedeeDocs})
 }
 
-func getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient) {
+func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, event *models.ReindexRequested) {
 	var wgDataset sync.WaitGroup
 	datasetChan := extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
