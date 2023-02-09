@@ -37,6 +37,7 @@ type Component struct {
 	errorChan         chan error
 	fakeAPIRouter     *FakeAPI
 	fakeKafkaConsumer kafka.IConsumerGroup
+	fakeKafkaProducer kafka.IProducer
 	HTTPServer        *http.Server
 	serviceList       *service.ExternalServiceList
 	serviceRunning    bool
@@ -66,7 +67,11 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	consumer := kafkatest.NewMessageConsumer(true)
 	consumer.CheckerFunc = funcCheck
 	consumer.StartFunc = func() error { return nil }
+	producer := kafkatest.NewMessageProducer(true)
+	producer.CheckerFunc = funcCheck
+
 	c.fakeKafkaConsumer = consumer
+	c.fakeKafkaProducer = producer
 
 	c.fakeAPIRouter = NewFakeAPI()
 	c.cfg.APIRouterURL = c.fakeAPIRouter.fakeHTTP.ResolveURL("")
@@ -76,6 +81,9 @@ func NewSearchDataFinderComponent() (*Component, error) {
 	initMock := &mock.InitialiserMock{
 		DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafkaConsumer kafka.IConsumerGroup, err error) {
 			return c.fakeKafkaConsumer, nil
+		},
+		DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafkaConsumer kafka.IProducer, err error) {
+			return c.fakeKafkaProducer, nil
 		},
 		DoGetHealthCheckFunc:  getHealthCheckOK,
 		DoGetHealthClientFunc: c.getHealthClientOK,
