@@ -57,6 +57,11 @@ func TestRun(t *testing.T) {
 			StartFunc:    func() error { return nil },
 		}
 
+		producerMock := &kafkatest.IProducerMock{
+			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+			ChannelsFunc: func() *kafka.ProducerChannels { return &kafka.ProducerChannels{} },
+		}
+
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
 			StartFunc:    func(ctx context.Context) {},
@@ -80,6 +85,10 @@ func TestRun(t *testing.T) {
 
 		funcDoGetKafkaConsumerOk := func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 			return consumerMock, nil
+		}
+
+		funcDoGetKafkaProducerOk := func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
+			return producerMock, nil
 		}
 
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
@@ -129,6 +138,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc:      funcDoGetHealthcheckErr,
 				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
 				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
 				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
@@ -151,6 +161,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc:      funcDoGetHealthcheckOk,
 				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
 				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
 				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
@@ -193,6 +204,7 @@ func TestRun(t *testing.T) {
 				},
 				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
 				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
 				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
@@ -234,10 +246,15 @@ func TestClose(t *testing.T) {
 
 		consumerMock := &kafkatest.IConsumerGroupMock{
 			StopFunc:     func() error { return nil },
-			CloseFunc:    func(ctx context.Context) error { return nil },
+			CloseFunc:    func(ctx context.Context, optFuncs ...kafka.OptFunc) error { return nil },
 			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 			ChannelsFunc: func() *kafka.ConsumerGroupChannels { return &kafka.ConsumerGroupChannels{} },
 			StartFunc:    func() error { return nil },
+		}
+
+		producerMock := &kafkatest.IProducerMock{
+			CheckerFunc:  func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+			ChannelsFunc: func() *kafka.ProducerChannels { return &kafka.ProducerChannels{} },
 		}
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
@@ -272,6 +289,9 @@ func TestClose(t *testing.T) {
 				DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 					return consumerMock, nil
 				},
+				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
+					return producerMock, nil
+				},
 				DoGetZebedeeClientFunc:    func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient { return zebedeeMock },
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
@@ -304,6 +324,9 @@ func TestClose(t *testing.T) {
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
 				DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error) {
 					return consumerMock, nil
+				},
+				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
+					return producerMock, nil
 				},
 				DoGetZebedeeClientFunc:    func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient { return zebedeeMock },
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,

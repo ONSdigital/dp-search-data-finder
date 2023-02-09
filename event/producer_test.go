@@ -61,8 +61,8 @@ func TestProducer_ContentUpdated(t *testing.T) {
 			Marshaller: marshallerMock,
 		}
 
-		Convey("When ContentUpdate is called on the event producer with ContentUpdatedTopicFlag enabled", func() {
-			err := contentUpdatedProducer.ContentUpdate(ctx, &config.Config{ContentUpdatedTopicFlag: true}, expectedContentUpdatedEvent)
+		Convey("When ContentUpdate is called on the event producer with EnablePublishContentUpdatedTopic enabled", func() {
+			err := contentUpdatedProducer.ContentUpdate(ctx, &config.Config{EnablePublishContentUpdatedTopic: true}, expectedContentUpdatedEvent)
 			So(err, ShouldBeNil)
 
 			var avroBytes []byte
