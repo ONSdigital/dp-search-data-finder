@@ -35,9 +35,9 @@ type ReindexRequestedHandler struct {
 // Handle takes a single event.
 // TODO - any error which occurs in the ReindexRequestedHandler.Handle function are not returned and only logged
 // We are only logging as we are not handling errors via an error topic yet
-func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.ReindexRequested) {
+func (h *ReindexRequestedHandler) Handle(ctx context.Context, reindexReqEvent *models.ReindexRequested) {
 	logData := log.Data{
-		"event": event,
+		"event": reindexReqEvent,
 	}
 	log.Info(ctx, "reindex requested event handler called", logData)
 
@@ -45,18 +45,18 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, event *models.Rein
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, event)
+		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, reindexReqEvent)
 	}()
 	go func() {
 		defer wg.Done()
-		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, event)
+		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
 	}()
 	wg.Wait()
 
 	log.Info(ctx, "event successfully handled", logData)
 }
 
-func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, event *models.ReindexRequested) {
+func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, reindexReqEvent *models.ReindexRequested) {
 	publishedIndex, err := zebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
 		// cfg.ZebedeeClientTimeout may need to be increased
@@ -74,19 +74,21 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 	// it takes more than 10 mins to retrieve all document urls from zebedee
 	// TODO: remove (i < 10) condition when this app has been completely implemented
 	for i := 0; (i < 10) && (i < totalZebedeeDocs); i++ {
-		h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
+		err := h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 			URI:         publishedIndex.Items[i].URI,
-			JobID:       event.JobID,
-			TraceID:     event.TraceID,
-			SearchIndex: event.SearchIndex,
+			JobID:       reindexReqEvent.JobID,
+			TraceID:     reindexReqEvent.TraceID,
+			SearchIndex: reindexReqEvent.SearchIndex,
 		})
+		log.Error(ctx, "failed to publish zebedee doc to content updated topic", err, log.Data{"request_params": nil})
+		return
 	}
 
 	log.Info(ctx, "first 10 Zebedee docs URLs retrieved", log.Data{"first URLs": urlList})
 	log.Info(ctx, "total number of zebedee docs retrieved", log.Data{"total_documents": totalZebedeeDocs})
 }
 
-func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, event *models.ReindexRequested) {
+func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested) {
 	var wgDataset sync.WaitGroup
 	datasetChan := extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)

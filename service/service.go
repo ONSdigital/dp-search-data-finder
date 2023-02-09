@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
@@ -10,6 +9,7 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
 	"github.com/ONSdigital/dp-search-data-finder/handler"
+	"github.com/ONSdigital/dp-search-data-finder/schema"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
