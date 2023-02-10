@@ -12,7 +12,6 @@ const KafkaTLSProtocolFlag = "TLS"
 type Config struct {
 	APIRouterURL                     string        `envconfig:"API_ROUTER_URL"`
 	BindAddr                         string        `envconfig:"BIND_ADDR"`
-	ContentUpdatedTopicFlag          bool          `envconfig:"CONTENT_UPDATED_TOPIC_FLAG"`
 	GracefulShutdownTimeout          time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckCriticalTimeout       time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	HealthCheckInterval              time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
@@ -50,7 +49,6 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		APIRouterURL:                     "http://localhost:23200/v1",
 		BindAddr:                         "localhost:28000",
-		ContentUpdatedTopicFlag:          false,
 		EnablePublishContentUpdatedTopic: false,
 		GracefulShutdownTimeout:          5 * time.Second,
 		HealthCheckCriticalTimeout:       90 * time.Second,

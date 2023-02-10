@@ -19,7 +19,7 @@ func TestConfig(t *testing.T) {
 			Convey("Then the values should be set to the expected defaults", func() {
 				So(cfg.APIRouterURL, ShouldEqual, "http://localhost:23200/v1")
 				So(cfg.BindAddr, ShouldEqual, "localhost:28000")
-				So(cfg.ContentUpdatedTopicFlag, ShouldEqual, false)
+				So(cfg.EnablePublishContentUpdatedTopic, ShouldEqual, false)
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 				So(cfg.HealthCheckInterval, ShouldEqual, 30*time.Second)
 				So(cfg.HealthCheckCriticalTimeout, ShouldEqual, 90*time.Second)
