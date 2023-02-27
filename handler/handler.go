@@ -41,21 +41,22 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, reindexReqEvent *m
 	log.Info(ctx, "reindex requested event handler called", logData)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, reindexReqEvent)
 	}()
-	go func() {
-		defer wg.Done()
-		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
-	}()
+	// go func() {
+	//	defer wg.Done()
+	//	h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
+	// }()
 	wg.Wait()
 
 	log.Info(ctx, "event successfully handled", logData)
 }
 
 func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, reindexReqEvent *models.ReindexRequested) {
+	log.Info(ctx, "extract and publish zebedee docs url")
 	publishedIndex, err := zebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
 		// cfg.ZebedeeClientTimeout may need to be increased
@@ -68,6 +69,12 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 	urlList := make([]string, 10)
 	publishedItems := publishedIndex.Items
 	totalZebedeeDocs := len(publishedItems)
+
+	logData := log.Data{
+		"totaldocs": totalZebedeeDocs,
+	}
+
+	log.Info(ctx, "publish to content updated topic", logData)
 
 	// only the first 10 docs are retrieved for testing and performance purposes
 	// it takes more than 10 mins to retrieve all document urls from zebedee

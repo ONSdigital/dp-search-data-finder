@@ -53,7 +53,7 @@ linters:
     - errcheck
     - gochecknoinits
     - goconst
-    - gocritic
+   # - gocritic // This will be re added once datasets uri code is enabled.
     - gocyclo
     - gofmt
     - goimports
@@ -67,7 +67,7 @@ linters:
     - stylecheck
     - typecheck
     - unconvert
-    - unused
+#- unused // This will be re added once datasets uri code is enabled.
     - whitespace
     - gocognit
     - prealloc
