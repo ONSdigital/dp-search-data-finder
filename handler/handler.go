@@ -41,15 +41,15 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, reindexReqEvent *m
 	log.Info(ctx, "reindex requested event handler called", logData)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, reindexReqEvent)
 	}()
-	// go func() {
-	//	defer wg.Done()
-	//	h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
-	// }()
+	go func() {
+		defer wg.Done()
+		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
+	}()
 	wg.Wait()
 
 	log.Info(ctx, "event successfully handled", logData)
@@ -97,6 +97,7 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 }
 
 func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested) {
+	log.Info(ctx, "extract and send dataset urls")
 	var wgDataset sync.WaitGroup
 	wgDataset.Add(4)
 	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
@@ -105,9 +106,11 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg
 	h.logExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
 	// TODO - logExtractedDatasetURLs is temporary and should be replaced in the future
 	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
+	log.Info(ctx, "successfully extracted all datasets")
 }
 
 func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
+	log.Info(ctx, "extract datasets")
 	datasetChan := make(chan dataset.Dataset)
 	go func() {
 		defer close(datasetChan)
@@ -126,6 +129,8 @@ func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset
 
 			listLength := len(list.Items)
 
+			log.Info(ctx, "datasets list length", log.Data{"url list length": listLength})
+
 			if listLength == 0 {
 				break
 			}
@@ -143,6 +148,7 @@ func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset
 }
 
 func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, datasetChan chan dataset.Dataset, serviceAuthToken string) chan DatasetEditionMetadata {
+	log.Info(ctx, "retrieve dataset editions")
 	editionMetadataChan := make(chan DatasetEditionMetadata)
 	go func() {
 		defer close(editionMetadataChan)
@@ -180,11 +186,13 @@ func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, w
 		}
 
 		wg.Wait()
+		log.Info(ctx, "successfully retrieved dataset editions")
 	}()
 	return editionMetadataChan
 }
 
 func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, editionMetadata chan DatasetEditionMetadata, serviceAuthToken string) chan string {
+	log.Info(ctx, "extract and send dataset url from the latest metadata")
 	datasetURLChan := make(chan string)
 	go func() {
 		defer close(datasetURLChan)
@@ -196,6 +204,7 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 			go func() {
 				defer wg.Done()
 				for edMetadata := range editionMetadata {
+					log.Info(ctx, "received edition metadata", log.Data{"metadata": edMetadata})
 					metadata, err := datasetAPIClient.GetVersionMetadata(ctx, "", serviceAuthToken, "", edMetadata.id, edMetadata.editionID, edMetadata.version)
 					if err != nil {
 						continue
@@ -205,6 +214,7 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 				}
 			}()
 		}
+		log.Info(ctx, "successfully handled metadata")
 		wg.Wait()
 	}()
 	return datasetURLChan
@@ -218,6 +228,7 @@ func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, w
 	go func() {
 		defer wgDataset.Done()
 		for datasetURL := range datasetURLChan {
+			log.Info(ctx, "log extracted dataset urls")
 			err := h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 				URI:         datasetURL,
 				JobID:       reindexReqEvent.JobID,
