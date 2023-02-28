@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	defaultGoRoutineCount    = 10
 	maxConcurrentExtractions = 20
 	DefaultPaginationLimit   = 500
 )
@@ -153,9 +154,8 @@ func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, w
 	go func() {
 		defer close(editionMetadataChan)
 		defer wgDataset.Done()
-		noOfConcurrentExtractions := getNoOfConcurrentExtractions(len(datasetChan), maxConcurrentExtractions)
 		var wg sync.WaitGroup
-		for i := 0; i < noOfConcurrentExtractions; i++ {
+		for i := 0; i < defaultGoRoutineCount; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -184,7 +184,6 @@ func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, w
 				}
 			}()
 		}
-
 		wg.Wait()
 		log.Info(ctx, "successfully retrieved dataset editions")
 	}()
@@ -198,8 +197,7 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 		defer close(datasetURLChan)
 		defer wgDataset.Done()
 		var wg sync.WaitGroup
-		noOfConcurrentExtractions := getNoOfConcurrentExtractions(len(editionMetadata), maxConcurrentExtractions)
-		for i := 0; i < noOfConcurrentExtractions; i++ {
+		for i := 0; i < defaultGoRoutineCount; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -243,11 +241,4 @@ func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, w
 	}()
 
 	log.Info(ctx, "dataset docs URLs retrieved", log.Data{"urls": urlList})
-}
-
-func getNoOfConcurrentExtractions(chanLength, max int) int {
-	if chanLength < max {
-		return chanLength
-	}
-	return max
 }
