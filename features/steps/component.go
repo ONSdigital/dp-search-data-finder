@@ -88,7 +88,7 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetHealthCheckFunc:  getHealthCheckOK,
 		DoGetHealthClientFunc: c.getHealthClientOK,
 		DoGetHTTPServerFunc:   c.getHTTPServer,
-		DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
 		DoGetDatasetAPIClientFunc: func(hcCli *health.Client) clients.DatasetAPIClient {

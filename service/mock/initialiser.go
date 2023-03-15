@@ -42,7 +42,7 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetKafkaProducerFunc: func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error) {
 //				panic("mock out the DoGetKafkaProducer method")
 //			},
-//			DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+//			DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 //				panic("mock out the DoGetZebedeeClient method")
 //			},
 //		}
@@ -71,7 +71,7 @@ type InitialiserMock struct {
 	DoGetKafkaProducerFunc func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
-	DoGetZebedeeClientFunc func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient
+	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -123,8 +123,6 @@ type InitialiserMock struct {
 		DoGetZebedeeClient []struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
-			// HcCli is the hcCli argument value.
-			HcCli *health.Client
 		}
 	}
 	lockDoGetDatasetAPIClient sync.RWMutex
@@ -357,21 +355,19 @@ func (mock *InitialiserMock) DoGetKafkaProducerCalls() []struct {
 }
 
 // DoGetZebedeeClient calls DoGetZebedeeClientFunc.
-func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
 	if mock.DoGetZebedeeClientFunc == nil {
 		panic("InitialiserMock.DoGetZebedeeClientFunc: method is nil but Initialiser.DoGetZebedeeClient was just called")
 	}
 	callInfo := struct {
-		Cfg   *config.Config
-		HcCli *health.Client
+		Cfg *config.Config
 	}{
-		Cfg:   cfg,
-		HcCli: hcCli,
+		Cfg: cfg,
 	}
 	mock.lockDoGetZebedeeClient.Lock()
 	mock.calls.DoGetZebedeeClient = append(mock.calls.DoGetZebedeeClient, callInfo)
 	mock.lockDoGetZebedeeClient.Unlock()
-	return mock.DoGetZebedeeClientFunc(cfg, hcCli)
+	return mock.DoGetZebedeeClientFunc(cfg)
 }
 
 // DoGetZebedeeClientCalls gets all the calls that were made to DoGetZebedeeClient.
@@ -379,12 +375,10 @@ func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config, hcCli *healt
 //
 //	len(mockedInitialiser.DoGetZebedeeClientCalls())
 func (mock *InitialiserMock) DoGetZebedeeClientCalls() []struct {
-	Cfg   *config.Config
-	HcCli *health.Client
+	Cfg *config.Config
 } {
 	var calls []struct {
-		Cfg   *config.Config
-		HcCli *health.Client
+		Cfg *config.Config
 	}
 	mock.lockDoGetZebedeeClient.RLock()
 	calls = mock.calls.DoGetZebedeeClient

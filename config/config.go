@@ -19,6 +19,7 @@ type Config struct {
 	ServiceAuthToken                 string        `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
 	ZebedeeClientTimeout             time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
 	EnablePublishContentUpdatedTopic bool          `envconfig:"ENABLE_PUBLISH_CONTENT_UPDATED_TOPIC"`
+	ZebedeeURL                       string        `envconfig:"ZEBEDEE_URL"`
 }
 
 // KafkaConfig contains the config required to connect to Kafka
@@ -69,6 +70,7 @@ func Get() (*Config, error) {
 		},
 		ServiceAuthToken:     "",
 		ZebedeeClientTimeout: 30 * time.Second,
+		ZebedeeURL:           "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)

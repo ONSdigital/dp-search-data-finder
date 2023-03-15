@@ -81,8 +81,8 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 }
 
 // GetZebedee return Zebedee client
-func (e *ExternalServiceList) GetZebedee(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
-	zebedeeClient := e.Init.DoGetZebedeeClient(cfg, hcCli)
+func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClient {
+	zebedeeClient := e.Init.DoGetZebedeeClient(cfg)
 	e.ZebedeeCli = true
 	return zebedeeClient
 }
@@ -95,14 +95,14 @@ func (e *ExternalServiceList) GetDatasetAPI(hcCli *health.Client) clients.Datase
 }
 
 // DoGetZebedeeClient gets and initialises the Zebedee Client
-func (e *Init) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
 	httpClient := dpHTTP.NewClient()
 
 	// as of 06/10/2022 published index takes about 10s to return so add a bit more, this could increase or decrease in the future
 	httpClient.SetTimeout(cfg.ZebedeeClientTimeout)
 
-	// communicating to zebedee via api-router (hcCli.URL) with configurable client (httpClient)
-	zebedeeClient := zebedee.NewClientWithClienter(hcCli.URL, httpClient)
+	// communicating to zebedee directly with configurable client (httpClient)
+	zebedeeClient := zebedee.NewClientWithClienter(cfg.ZebedeeURL, httpClient)
 
 	return zebedeeClient
 }

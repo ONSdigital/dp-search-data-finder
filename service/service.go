@@ -37,7 +37,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	routerHealthClient := serviceList.GetHealthClient("api-router", cfg.APIRouterURL)
 
 	// Get the zebedee client
-	zebedeeClient := serviceList.GetZebedee(cfg, routerHealthClient)
+	zebedeeClient := serviceList.GetZebedee(cfg)
 
 	// Get dataset-api client
 	datasetAPIClient := serviceList.GetDatasetAPI(routerHealthClient)

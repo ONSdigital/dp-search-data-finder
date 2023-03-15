@@ -103,7 +103,7 @@ func TestRun(t *testing.T) {
 			return serverMock
 		}
 
-		funcDoGetZebedeeOk := func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+		funcDoGetZebedeeOk := func(cfg *config.Config) clients.ZebedeeClient {
 			return zebedeeMock
 		}
 
@@ -292,7 +292,7 @@ func TestClose(t *testing.T) {
 				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
 					return producerMock, nil
 				},
-				DoGetZebedeeClientFunc:    func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient { return zebedeeMock },
+				DoGetZebedeeClientFunc:    func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
 
@@ -328,7 +328,7 @@ func TestClose(t *testing.T) {
 				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
 					return producerMock, nil
 				},
-				DoGetZebedeeClientFunc:    func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient { return zebedeeMock },
+				DoGetZebedeeClientFunc:    func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
 
