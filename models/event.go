@@ -10,6 +10,14 @@ type ContentUpdated struct {
 	SearchIndex  string `avro:"search_index"`
 }
 
+// ReindexTaskCounts provides an avro structure for a Reindex task counts event
+type ReindexTaskCounts struct {
+	JobID               string `avro:"job_id"`
+	Task                string `avro:"task"`
+	ExtractionCompleted bool   `avro:"extraction_completed"`
+	Count               string `avro:"count"`
+}
+
 // ReindexRequested provides an avro structure for a Reindex Requested event
 type ReindexRequested struct {
 	JobID       string `avro:"job_id"`

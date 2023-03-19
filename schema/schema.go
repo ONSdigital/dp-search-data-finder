@@ -22,6 +22,22 @@ var ContentUpdatedEvent = &avro.Schema{
 	Definition: contentUpdated,
 }
 
+var reindexTaskCounts = `{
+  "type": "record",
+  "name": "reindex-task-counts",
+  "fields": [
+    {"name": "job_id", "type": "string", "default": ""},
+    {"name": "task", "type": "string", "default": ""},
+    {"name": "extraction_completed", "type": "boolean", "default": false},
+    {"name": "count", "type": "string", "default":"0"}
+  ]
+}`
+
+// ReindexTaskCounts is the Avro schema for reindex task messages.
+var ReindexTaskCounts = &avro.Schema{
+	Definition: reindexTaskCounts,
+}
+
 var reindexRequestedEvent = `{
 	"type": "record",
 	"name": "reindex-requested",

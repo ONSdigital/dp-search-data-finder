@@ -22,6 +22,7 @@ type Initialiser interface {
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafka.IConsumerGroup, error)
 	DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
+	DoGetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 	DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient
 	DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient
 }

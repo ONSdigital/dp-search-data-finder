@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
@@ -18,6 +20,10 @@ var (
 	DefaultPaginationLimit   = 500
 )
 
+const (
+	TotalTasksCount = 2
+)
+
 type DatasetEditionMetadata struct {
 	id        string
 	editionID string
@@ -26,10 +32,16 @@ type DatasetEditionMetadata struct {
 
 // ReindexRequestedHandler is the handler for reindex requested messages.
 type ReindexRequestedHandler struct {
-	ZebedeeCli    clients.ZebedeeClient
-	DatasetAPICli clients.DatasetAPIClient
-	Producer      event.ContentUpdatedProducer
-	Config        *config.Config
+	ZebedeeCli                clients.ZebedeeClient
+	DatasetAPICli             clients.DatasetAPIClient
+	ContentUpdatedProducer    event.ContentUpdatedProducer
+	ReindexTaskCountsProducer event.ReindexTaskCountsProducer
+	Config                    *config.Config
+}
+
+type taskDetails struct {
+	Name  string
+	count int
 }
 
 // Handle takes a single event.
@@ -41,22 +53,47 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, reindexReqEvent *m
 	}
 	log.Info(ctx, "reindex requested event handler called", logData)
 
+	taskCounter := 1
+	tasks := make(chan taskDetails)
+	var extractionCompleted bool
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, reindexReqEvent)
+		h.getAndSendZebedeeDocsURL(ctx, h.Config, h.ZebedeeCli, reindexReqEvent, tasks)
 	}()
 	go func() {
 		defer wg.Done()
-		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent)
+		h.getAndSendDatasetURLs(ctx, h.Config, h.DatasetAPICli, reindexReqEvent, tasks)
+	}()
+	go func() {
+		defer wg.Done()
+		for task := range tasks {
+			if taskCounter == TotalTasksCount {
+				extractionCompleted = true
+			}
+			err := h.ReindexTaskCountsProducer.TaskCounts(ctx, h.Config, models.ReindexTaskCounts{
+				JobID:               reindexReqEvent.JobID,
+				Task:                task.Name,
+				Count:               strconv.Itoa(task.count),
+				ExtractionCompleted: extractionCompleted,
+			})
+			if err != nil {
+				log.Error(ctx, "failed to publish task counts to reindex task counts topic due to", err, log.Data{"request_params": nil})
+				return
+			}
+			taskCounter++
+			if taskCounter > TotalTasksCount {
+				break
+			}
+		}
 	}()
 	wg.Wait()
 
 	log.Info(ctx, "event successfully handled", logData)
 }
 
-func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, reindexReqEvent *models.ReindexRequested) {
+func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, cfg *config.Config, zebedeeCli clients.ZebedeeClient, reindexReqEvent *models.ReindexRequested, task chan taskDetails) {
 	log.Info(ctx, "extract and publish zebedee docs url")
 	publishedIndex, err := zebedeeCli.GetPublishedIndex(ctx, nil)
 	if err != nil {
@@ -81,7 +118,7 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 	// it takes more than 10 mins to retrieve all document urls from zebedee
 	// TODO: remove (i < 10) condition when this app has been completely implemented
 	for i := 0; (i < 10) && (i < totalZebedeeDocs); i++ {
-		err := h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
+		err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 			URI:         publishedIndex.Items[i].URI,
 			JobID:       reindexReqEvent.JobID,
 			TraceID:     reindexReqEvent.TraceID,
@@ -95,19 +132,29 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 
 	log.Info(ctx, "first 10 Zebedee docs URLs retrieved", log.Data{"first URLs": urlList})
 	log.Info(ctx, "total number of zebedee docs retrieved", log.Data{"total_documents": totalZebedeeDocs})
+	taskNames := strings.Split(cfg.TaskNameValues, ",")
+	task <- taskDetails{
+		Name:  extractTaskName(taskNames, "zebedee"),
+		count: totalZebedeeDocs,
+	}
 }
 
-func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested) {
+func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested, task chan taskDetails) {
 	log.Info(ctx, "extract and send dataset urls")
 	var wgDataset sync.WaitGroup
 	wgDataset.Add(4)
 	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := h.retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
 	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
-	h.logExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
+	urlCount := h.logExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
 	// TODO - logExtractedDatasetURLs is temporary and should be replaced in the future
 	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
 	log.Info(ctx, "successfully extracted all datasets")
+	taskNames := strings.Split(cfg.TaskNameValues, ",")
+	task <- taskDetails{
+		Name:  extractTaskName(taskNames, "dataset"),
+		count: urlCount,
+	}
 }
 
 func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
@@ -221,13 +268,13 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 // TODO - logExtractedDatasetURLs is temporary.
 // The dataset url should be sent to the content-updated topic here in the future.
 // But for the time being, we are going to extract the urls and print them
-func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) {
-	urlList := make([]string, 0)
+func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
+	var urlListCount int
 	go func() {
 		defer wgDataset.Done()
 		for datasetURL := range datasetURLChan {
 			log.Info(ctx, "log extracted dataset urls")
-			err := h.Producer.ContentUpdate(ctx, cfg, models.ContentUpdated{
+			err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 				URI:         datasetURL,
 				JobID:       reindexReqEvent.JobID,
 				TraceID:     reindexReqEvent.TraceID,
@@ -237,8 +284,17 @@ func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, w
 				log.Error(ctx, "failed to publish datasets to content update topic", err)
 				return
 			}
+			urlListCount++
 		}
 	}()
+	return urlListCount
+}
 
-	log.Info(ctx, "dataset docs URLs retrieved", log.Data{"urls": urlList})
+func extractTaskName(taskNames []string, matchingName string) string {
+	for _, taskName := range taskNames {
+		if strings.Contains(taskName, matchingName) {
+			return taskName
+		}
+	}
+	return ""
 }

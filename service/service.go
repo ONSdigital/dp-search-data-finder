@@ -56,17 +56,30 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
+	// Get Kafka producer for reindex task counts
+	producerForReindexTaskCounts, err := serviceList.GetKafkaProducerForReindexTaskCounts(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
+
 	contentUpdatedProducer := event.ContentUpdatedProducer{
 		Marshaller: schema.ContentUpdatedEvent,
 		Producer:   producer,
 	}
 
+	reindexTaskCountsProducer := event.ReindexTaskCountsProducer{
+		Marshaller: schema.ReindexTaskCounts,
+		Producer:   producerForReindexTaskCounts,
+	}
+
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		Config:        cfg,
-		ZebedeeCli:    zebedeeClient,
-		DatasetAPICli: datasetAPIClient,
-		Producer:      contentUpdatedProducer,
+		Config:                    cfg,
+		ZebedeeCli:                zebedeeClient,
+		DatasetAPICli:             datasetAPIClient,
+		ContentUpdatedProducer:    contentUpdatedProducer,
+		ReindexTaskCountsProducer: reindexTaskCountsProducer,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)

@@ -155,10 +155,43 @@ func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.
 	return producer, nil
 }
 
+// GetKafkaProducer creates a Kafka producer and sets the producder flag to true
+func (e *ExternalServiceList) GetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	producer, err := e.Init.DoGetKafkaProducerForReindexTaskCounts(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.KafkaProducer = true
+	return producer, nil
+}
+
 func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
 	pConfig := &dpkafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaConfig.Version,
 		Topic:        cfg.KafkaConfig.ContentUpdatedTopic,
+		BrokerAddrs:  cfg.KafkaConfig.Brokers,
+	}
+
+	if cfg.KafkaConfig.SecProtocol == KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = dpkafka.GetSecurityConfig(
+			cfg.KafkaConfig.SecCACerts,
+			cfg.KafkaConfig.SecClientCert,
+			cfg.KafkaConfig.SecClientKey,
+			cfg.KafkaConfig.SecSkipVerify,
+		)
+	}
+	producer, err := dpkafka.NewProducer(ctx, pConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return producer, nil
+}
+
+func (e *Init) DoGetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	pConfig := &dpkafka.ProducerConfig{
+		KafkaVersion: &cfg.KafkaConfig.Version,
+		Topic:        cfg.KafkaConfig.ReindexTaskCountsTopic,
 		BrokerAddrs:  cfg.KafkaConfig.Brokers,
 	}
 

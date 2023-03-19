@@ -85,6 +85,9 @@ func NewSearchDataFinderComponent() (*Component, error) {
 		DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafkaConsumer kafka.IProducer, err error) {
 			return c.fakeKafkaProducer, nil
 		},
+		DoGetKafkaProducerForReindexTaskCountsFunc: func(ctx context.Context, config *config.Config) (kafkaConsumer kafka.IProducer, err error) {
+			return c.fakeKafkaProducer, nil
+		},
 		DoGetHealthCheckFunc:  getHealthCheckOK,
 		DoGetHealthClientFunc: c.getHealthClientOK,
 		DoGetHTTPServerFunc:   c.getHTTPServer,

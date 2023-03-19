@@ -134,13 +134,14 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:       funcDoGetHTTPServerNil,
-				DoGetHealthCheckFunc:      funcDoGetHealthcheckErr,
-				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
-				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
-				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
-				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
-				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
+				DoGetHTTPServerFunc:                        funcDoGetHTTPServerNil,
+				DoGetHealthCheckFunc:                       funcDoGetHealthcheckErr,
+				DoGetHealthClientFunc:                      funcDoGetHealthClientOk,
+				DoGetKafkaConsumerFunc:                     funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:                     funcDoGetKafkaProducerOk,
+				DoGetKafkaProducerForReindexTaskCountsFunc: funcDoGetKafkaProducerOk,
+				DoGetZebedeeClientFunc:                     funcDoGetZebedeeOk,
+				DoGetDatasetAPIClientFunc:                  funcDoGetDatasetAPIOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -157,13 +158,14 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that all dependencies are successfully initialised", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:       funcDoGetHTTPServer,
-				DoGetHealthCheckFunc:      funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
-				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
-				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
-				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
-				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
+				DoGetHTTPServerFunc:                        funcDoGetHTTPServer,
+				DoGetHealthCheckFunc:                       funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc:                      funcDoGetHealthClientOk,
+				DoGetKafkaConsumerFunc:                     funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:                     funcDoGetKafkaProducerOk,
+				DoGetKafkaProducerForReindexTaskCountsFunc: funcDoGetKafkaProducerOk,
+				DoGetZebedeeClientFunc:                     funcDoGetZebedeeOk,
+				DoGetDatasetAPIClientFunc:                  funcDoGetDatasetAPIOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -202,11 +204,12 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetHealthClientFunc:     funcDoGetHealthClientOk,
-				DoGetKafkaConsumerFunc:    funcDoGetKafkaConsumerOk,
-				DoGetKafkaProducerFunc:    funcDoGetKafkaProducerOk,
-				DoGetZebedeeClientFunc:    funcDoGetZebedeeOk,
-				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
+				DoGetHealthClientFunc:                      funcDoGetHealthClientOk,
+				DoGetKafkaConsumerFunc:                     funcDoGetKafkaConsumerOk,
+				DoGetKafkaProducerFunc:                     funcDoGetKafkaProducerOk,
+				DoGetKafkaProducerForReindexTaskCountsFunc: funcDoGetKafkaProducerOk,
+				DoGetZebedeeClientFunc:                     funcDoGetZebedeeOk,
+				DoGetDatasetAPIClientFunc:                  funcDoGetDatasetAPIOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -292,6 +295,9 @@ func TestClose(t *testing.T) {
 				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
 					return producerMock, nil
 				},
+				DoGetKafkaProducerForReindexTaskCountsFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
+					return producerMock, nil
+				},
 				DoGetZebedeeClientFunc:    func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
 				DoGetDatasetAPIClientFunc: funcDoGetDatasetAPIOk,
 			}
@@ -326,6 +332,9 @@ func TestClose(t *testing.T) {
 					return consumerMock, nil
 				},
 				DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
+					return producerMock, nil
+				},
+				DoGetKafkaProducerForReindexTaskCountsFunc: func(ctx context.Context, config *config.Config) (kafka.IProducer, error) {
 					return producerMock, nil
 				},
 				DoGetZebedeeClientFunc:    func(cfg *config.Config) clients.ZebedeeClient { return zebedeeMock },
