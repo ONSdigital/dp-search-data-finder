@@ -95,7 +95,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, routerHealthClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, producer, producerForReindexTaskCounts, routerHealthClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -183,7 +183,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, routerHealthClient *health.Client) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, contentUpdatedProducer, reindexTaskCounts kafka.IProducer, routerHealthClient *health.Client) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("API router", routerHealthClient.Checker); err != nil {
@@ -191,6 +191,14 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 		log.Error(ctx, "error adding check for api-router", err)
 	}
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for kafka", err)
+	}
+	if err := hc.AddCheck("Kafka content updated producer", contentUpdatedProducer.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for kafka", err)
+	}
+	if err := hc.AddCheck("Kafka reindex task counts producer", reindexTaskCounts.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for kafka", err)
 	}

@@ -15,7 +15,7 @@ type ReindexTaskCounts struct {
 	JobID               string `avro:"job_id"`
 	Task                string `avro:"task"`
 	ExtractionCompleted bool   `avro:"extraction_completed"`
-	Count               string `avro:"count"`
+	Count               int32  `avro:"count"`
 }
 
 // ReindexRequested provides an avro structure for a Reindex Requested event

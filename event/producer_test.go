@@ -21,7 +21,7 @@ const (
 	someCollectionID = "test-collectionID"
 	someJobID        = "test-Jobid"
 	someTask         = "test-task"
-	testCount        = "10"
+	testCount        = 10
 	someTraceID      = "w34234dgdge335g3333"
 	someSearchIndex  = "test-searchindex"
 )
@@ -129,7 +129,6 @@ func TestProducer_ReindexTaskCounts(t *testing.T) {
 				t.Log("avro byte sent to producer output")
 			case <-time.After(testTimeout):
 				t.Fatalf("failing test due to timing out after %v seconds", testTimeout)
-				t.FailNow()
 			}
 
 			Convey("Then the expected bytes are sent to producer.output", func() {

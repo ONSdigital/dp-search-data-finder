@@ -28,6 +28,18 @@ Feature: Healthcheck endpoint should inform the health of service
                         "status":"OK",
                         "status_code":200,
                         "message":"OK"
+                    },
+                    {
+                        "name":"Kafka content updated producer",
+                        "status":"OK",
+                        "status_code":200,
+                        "message":"OK"
+                    },
+                    {
+                        "name":"Kafka reindex task counts producer",
+                        "status":"OK",
+                        "status_code":200,
+                        "message":"OK"
                     }
                 ]
             }

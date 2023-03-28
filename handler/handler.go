@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -75,7 +74,7 @@ func (h *ReindexRequestedHandler) Handle(ctx context.Context, reindexReqEvent *m
 			err := h.ReindexTaskCountsProducer.TaskCounts(ctx, h.Config, models.ReindexTaskCounts{
 				JobID:               reindexReqEvent.JobID,
 				Task:                task.Name,
-				Count:               strconv.Itoa(task.count),
+				Count:               int32(task.count),
 				ExtractionCompleted: extractionCompleted,
 			})
 			if err != nil {

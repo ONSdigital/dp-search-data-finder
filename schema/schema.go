@@ -29,7 +29,7 @@ var reindexTaskCounts = `{
     {"name": "job_id", "type": "string", "default": ""},
     {"name": "task", "type": "string", "default": ""},
     {"name": "extraction_completed", "type": "boolean", "default": false},
-    {"name": "count", "type": "string", "default":"0"}
+    {"name": "count", "type": "int"}
   ]
 }`
 
