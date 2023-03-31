@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	datasetCli "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v3"
@@ -12,12 +14,17 @@ import (
 	"github.com/ONSdigital/dp-search-data-finder/config"
 )
 
+// KafkaTLSProtocolFlag informs service to use TLS protocol for kafka
+const KafkaTLSProtocolFlag = "TLS"
+
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaConsumer bool
+	KafkaProducer bool
 	Init          Initialiser
 	ZebedeeCli    bool
+	DatasetAPICli bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -25,8 +32,10 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
 		HealthCheck:   false,
 		KafkaConsumer: false,
+		KafkaProducer: false,
 		Init:          initialiser,
 		ZebedeeCli:    false,
+		DatasetAPICli: false,
 	}
 }
 
@@ -59,6 +68,11 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 	return hc, nil
 }
 
+// GetHealthClient returns a healthclient for the provided URL
+func (e *ExternalServiceList) GetHealthClient(name, url string) *health.Client {
+	return e.Init.DoGetHealthClient(name, url)
+}
+
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dpHTTP.NewServer(bindAddr, router)
@@ -73,12 +87,30 @@ func (e *ExternalServiceList) GetZebedee(cfg *config.Config) clients.ZebedeeClie
 	return zebedeeClient
 }
 
+// GetDatasetAPI return dataset-api client
+func (e *ExternalServiceList) GetDatasetAPI(hcCli *health.Client) clients.DatasetAPIClient {
+	datasetAPIClient := e.Init.DoGetDatasetAPIClient(hcCli)
+	e.DatasetAPICli = true
+	return datasetAPIClient
+}
+
 // DoGetZebedeeClient gets and initialises the Zebedee Client
 func (e *Init) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
 	httpClient := dpHTTP.NewClient()
-	httpClient.SetTimeout(cfg.ZebedeeClientTimeout) // Published Index takes about 10s to return so add a bit more
+
+	// as of 06/10/2022 published index takes about 10s to return so add a bit more, this could increase or decrease in the future
+	httpClient.SetTimeout(cfg.ZebedeeClientTimeout)
+
+	// communicating to zebedee directly with configurable client (httpClient)
 	zebedeeClient := zebedee.NewClientWithClienter(cfg.ZebedeeURL, httpClient)
+
 	return zebedeeClient
+}
+
+// DoGetDatasetAPIClient gets and initialises the dataset-api Client
+func (e *Init) DoGetDatasetAPIClient(hcCli *health.Client) clients.DatasetAPIClient {
+	datasetAPIClient := datasetCli.NewWithHealthClient(hcCli)
+	return datasetAPIClient
 }
 
 // DoGetKafkaConsumer returns a Kafka Consumer group
@@ -91,7 +123,7 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaCon
 		KafkaVersion: &kafkaCfg.Version,
 		Offset:       &kafkaOffset,
 		Topic:        kafkaCfg.ReindexRequestedTopic,
-		GroupName:    kafkaCfg.ReindexRequestedGroup,
+		GroupName:    kafkaCfg.ConsumerGroup,
 		BrokerAddrs:  kafkaCfg.Brokers,
 	}
 	if kafkaCfg.SecProtocol == config.KafkaTLSProtocolFlag {
@@ -113,6 +145,72 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, kafkaCfg *config.KafkaCon
 	return kafkaConsumer, nil
 }
 
+// GetKafkaProducer creates a Kafka producer and sets the producder flag to true
+func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	producer, err := e.Init.DoGetKafkaProducer(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.KafkaProducer = true
+	return producer, nil
+}
+
+// GetKafkaProducer creates a Kafka producer and sets the producder flag to true
+func (e *ExternalServiceList) GetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	producer, err := e.Init.DoGetKafkaProducerForReindexTaskCounts(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.KafkaProducer = true
+	return producer, nil
+}
+
+func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	pConfig := &dpkafka.ProducerConfig{
+		KafkaVersion: &cfg.KafkaConfig.Version,
+		Topic:        cfg.KafkaConfig.ContentUpdatedTopic,
+		BrokerAddrs:  cfg.KafkaConfig.Brokers,
+	}
+
+	if cfg.KafkaConfig.SecProtocol == KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = dpkafka.GetSecurityConfig(
+			cfg.KafkaConfig.SecCACerts,
+			cfg.KafkaConfig.SecClientCert,
+			cfg.KafkaConfig.SecClientKey,
+			cfg.KafkaConfig.SecSkipVerify,
+		)
+	}
+	producer, err := dpkafka.NewProducer(ctx, pConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return producer, nil
+}
+
+func (e *Init) DoGetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (dpkafka.IProducer, error) {
+	pConfig := &dpkafka.ProducerConfig{
+		KafkaVersion: &cfg.KafkaConfig.Version,
+		Topic:        cfg.KafkaConfig.ReindexTaskCountsTopic,
+		BrokerAddrs:  cfg.KafkaConfig.Brokers,
+	}
+
+	if cfg.KafkaConfig.SecProtocol == KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = dpkafka.GetSecurityConfig(
+			cfg.KafkaConfig.SecCACerts,
+			cfg.KafkaConfig.SecClientCert,
+			cfg.KafkaConfig.SecClientKey,
+			cfg.KafkaConfig.SecSkipVerify,
+		)
+	}
+	producer, err := dpkafka.NewProducer(ctx, pConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return producer, nil
+}
+
 // DoGetHealthCheck creates a healthcheck with versionInfo
 func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)
@@ -121,4 +219,9 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	}
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+// DoGetHealthClient creates a new Health Client for the provided name and url
+func (e *Init) DoGetHealthClient(name, url string) *health.Client {
+	return health.NewClient(name, url)
 }

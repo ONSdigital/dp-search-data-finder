@@ -45,6 +45,15 @@ func (c *Component) RegisterSteps(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`^these reindex-requested events are consumed:$`, c.theseReindexrequestedEventsAreConsumed)
 	ctx.Step(`^I should receive a reindex-requested response$`, c.iShouldReceiveAReindexrequestedResponse)
+	ctx.Step(`^the URLs of zebedee and dataset documents are retrieved successfully$`, c.nothingHappens)
+
+	ctx.Step(`^get published-index request to zebedee is successful$`, c.getPublishedIndexRequestToZebedeeIsSuccessful)
+	ctx.Step(`^get published-index request to zebedee is unsuccessful$`, c.getPublishedIndexRequestToZebedeeIsUnsuccessful)
+	ctx.Step(`^the URLs of zebedee documents are not retrieved$`, c.nothingHappens)
+
+	ctx.Step(`^get requests to dataset-api is successful$`, c.getRequestsToDatasetapiIsSuccessful)
+	ctx.Step(`^get requests to dataset-api is unsuccessful$`, c.getRequestsToDatasetapiIsUnsuccessful)
+	ctx.Step(`^the URLs of dataset documents are not retrieved$`, c.nothingHappens)
 }
 
 // delayTimeByMilliSeconds pauses the goroutine for the given seconds
@@ -59,10 +68,26 @@ func delayTimeByMilliSeconds(milliseconds string) (err error) {
 }
 
 func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
-	c.fakeZebedee.setJSONResponseForGetHealth("/health", 200)
+	c.fakeAPIRouter.setJSONResponseForGetHealth(200)
 	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 
 	return
+}
+
+func (c *Component) getPublishedIndexRequestToZebedeeIsSuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetPublishIndex(200)
+}
+
+func (c *Component) getPublishedIndexRequestToZebedeeIsUnsuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetPublishIndex(500)
+}
+
+func (c *Component) getRequestsToDatasetapiIsSuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetDatasets(200)
+}
+
+func (c *Component) getRequestsToDatasetapiIsUnsuccessful() {
+	c.fakeAPIRouter.setJSONResponseForGetDatasets(500)
 }
 
 func (c *Component) iShouldReceiveTheFollowingHealthJSONResponse(expectedResponse *godog.DocString) error {
@@ -87,6 +112,8 @@ func (c *Component) iShouldReceiveTheFollowingHealthJSONResponse(expectedRespons
 
 	return c.errorFeature.StepError()
 }
+
+func (c *Component) nothingHappens() {}
 
 func (c *Component) validateHealthCheckResponse(healthResponse, expectedResponse HealthCheckTest) {
 	maxExpectedStartTime := c.startTime.Add((c.cfg.HealthCheckInterval + 1) * time.Second)
@@ -133,7 +160,7 @@ func (c *Component) iShouldReceiveAReindexrequestedResponse() error {
 }
 
 func (c *Component) theseReindexrequestedEventsAreConsumed(table *godog.Table) error {
-	c.fakeZebedee.setJSONResponseForGetPublishIndex(200)
+	c.fakeAPIRouter.setJSONResponseForGetPublishIndex(200)
 	observationEvents, err := c.convertToReindexRequestedEvents(table)
 	if err != nil {
 		return err
@@ -166,6 +193,11 @@ func (c *Component) sendToConsumer(e *models.ReindexRequested) error {
 		return err
 	}
 
-	c.fakeKafkaConsumer.Channels().Upstream <- kafkatest.NewMessage(bytes, 0)
+	newMessage, err := kafkatest.NewMessage(bytes, 0)
+	if err != nil {
+		return err
+	}
+
+	c.fakeKafkaConsumer.Channels().Upstream <- newMessage
 	return nil
 }

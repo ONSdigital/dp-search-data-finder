@@ -27,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create Kafka Producer
+	// Create Kafka ContentUpdatedProducer
 	pConfig := &kafka.ProducerConfig{
 		BrokerAddrs:  cfg.KafkaConfig.Brokers,
 		Topic:        cfg.KafkaConfig.ContentUpdatedTopic,

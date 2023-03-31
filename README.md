@@ -55,7 +55,7 @@ a. To check if service produced an event for content-updated Topic
 
 make test
 
-b. set ContentUpdatedTopicFlag in config as true/false
+b. set EnablePublishContentUpdatedTopic in config as true/false
 
 c. build and run the service
 go build
@@ -66,7 +66,7 @@ make produce
 Type uri (any text)
 
 e. Check the service logs if either of the following appears and there is no error in service logs   
-ContentUpdatedTopic Flag is enabled/disabled
+EnablePublishContentUpdatedTopic Flag is enabled/disabled
 
 ### Contributing
 

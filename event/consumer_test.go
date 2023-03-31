@@ -2,7 +2,6 @@ package event_test
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 
@@ -18,8 +17,6 @@ import (
 
 var (
 	testCtx = context.Background()
-
-	errHandler = errors.New("handler error")
 
 	testEvent = models.ReindexRequested{
 		JobID:       "job id",
@@ -45,14 +42,17 @@ func TestConsume(t *testing.T) {
 
 		handlerWg := &sync.WaitGroup{}
 		mockEventHandler := &mock.HandlerMock{
-			HandleFunc: func(ctx context.Context, event *models.ReindexRequested) error {
+			HandleFunc: func(ctx context.Context, event *models.ReindexRequested) {
 				defer handlerWg.Done()
-				return nil
 			},
 		}
 
 		Convey("And a kafka message with the valid schema being sent to the Upstream channel", func() {
-			message := kafkatest.NewMessage(marshal(testEvent), 0)
+			message, err := kafkatest.NewMessage(marshal(testEvent), 0)
+			if err != nil {
+				t.Errorf("failed to create new message - err: %v", err)
+			}
+
 			mockConsumer.Channels().Upstream <- message
 			Convey("When consume message is called", func() {
 				handlerWg.Add(1)
@@ -73,8 +73,14 @@ func TestConsume(t *testing.T) {
 		})
 
 		Convey("And two kafka messages, one with a valid schema and one with an invalid schema", func() {
-			validMessage := kafkatest.NewMessage(marshal(testEvent), 1)
-			invalidMessage := kafkatest.NewMessage([]byte("invalid schema"), 0)
+			validMessage, err := kafkatest.NewMessage(marshal(testEvent), 1)
+			if err != nil {
+				t.Errorf("failed to create valid kafka message - err: %v", err)
+			}
+			invalidMessage, err := kafkatest.NewMessage([]byte("invalid schema"), 0)
+			if err != nil {
+				t.Errorf("failed to create invalid kafka message - err: %v", err)
+			}
 			mockConsumer.Channels().Upstream <- invalidMessage
 			mockConsumer.Channels().Upstream <- validMessage
 			Convey("When consume messages is called", func() {
@@ -99,11 +105,10 @@ func TestConsume(t *testing.T) {
 		})
 
 		Convey("With a failing handler and a kafka message with the valid schema being sent to the Upstream channel", func() {
-			mockEventHandler.HandleFunc = func(ctx context.Context, event *models.ReindexRequested) error {
-				defer handlerWg.Done()
-				return errHandler
+			message, err := kafkatest.NewMessage(marshal(testEvent), 0)
+			if err != nil {
+				t.Errorf("failed to create new kafka message - err: %v", err)
 			}
-			message := kafkatest.NewMessage(marshal(testEvent), 0)
 			mockConsumer.Channels().Upstream <- message
 			Convey("When consume message is called", func() {
 				handlerWg.Add(1)
