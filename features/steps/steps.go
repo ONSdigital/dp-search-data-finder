@@ -69,7 +69,7 @@ func delayTimeByMilliSeconds(milliseconds string) (err error) {
 
 func (c *Component) allOfTheDownstreamServicesAreHealthy() (err error) {
 	c.fakeAPIRouter.setJSONResponseForGetHealth(200)
-	err = c.fakeKafkaConsumer.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
+	err = c.fakeKafkaConsumer.Mock.Checker(context.Background(), healthcheck.NewCheckState("topic-test"))
 
 	return
 }
@@ -198,6 +198,6 @@ func (c *Component) sendToConsumer(e *models.ReindexRequested) error {
 		return err
 	}
 
-	c.fakeKafkaConsumer.Channels().Upstream <- newMessage
+	c.fakeKafkaConsumer.Mock.Channels().Upstream <- newMessage
 	return nil
 }
