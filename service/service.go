@@ -37,7 +37,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	routerHealthClient := serviceList.GetHealthClient("api-router", cfg.APIRouterURL)
 
 	// Get the zebedee client
-	zebedeeClient := serviceList.GetZebedee(cfg, routerHealthClient)
+	zebedeeClient := serviceList.GetZebedee(cfg)
 
 	// Get dataset-api client
 	datasetAPIClient := serviceList.GetDatasetAPI(routerHealthClient)
@@ -56,17 +56,30 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
+	// Get Kafka producer for reindex task counts
+	producerForReindexTaskCounts, err := serviceList.GetKafkaProducerForReindexTaskCounts(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
+
 	contentUpdatedProducer := event.ContentUpdatedProducer{
 		Marshaller: schema.ContentUpdatedEvent,
 		Producer:   producer,
 	}
 
+	reindexTaskCountsProducer := event.ReindexTaskCountsProducer{
+		Marshaller: schema.ReindexTaskCounts,
+		Producer:   producerForReindexTaskCounts,
+	}
+
 	// Event Handler for Kafka Consumer
 	eventhandler := &handler.ReindexRequestedHandler{
-		Config:        cfg,
-		ZebedeeCli:    zebedeeClient,
-		DatasetAPICli: datasetAPIClient,
-		Producer:      contentUpdatedProducer,
+		Config:                    cfg,
+		ZebedeeCli:                zebedeeClient,
+		DatasetAPICli:             datasetAPIClient,
+		ContentUpdatedProducer:    contentUpdatedProducer,
+		ReindexTaskCountsProducer: reindexTaskCountsProducer,
 	}
 
 	event.Consume(ctx, consumer, eventhandler, cfg)
@@ -82,7 +95,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc, consumer, routerHealthClient); err != nil {
+	if err := registerCheckers(ctx, hc, consumer, producer, producerForReindexTaskCounts, routerHealthClient); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -170,7 +183,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	return nil
 }
 
-func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, routerHealthClient *health.Client) error {
+func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.IConsumerGroup, contentUpdatedProducer, reindexTaskCounts kafka.IProducer, routerHealthClient *health.Client) error {
 	hasErrors := false
 
 	if err := hc.AddCheck("API router", routerHealthClient.Checker); err != nil {
@@ -178,6 +191,14 @@ func registerCheckers(ctx context.Context, hc HealthChecker, consumer kafka.ICon
 		log.Error(ctx, "error adding check for api-router", err)
 	}
 	if err := hc.AddCheck("Kafka consumer", consumer.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for kafka", err)
+	}
+	if err := hc.AddCheck("Kafka content updated producer", contentUpdatedProducer.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for kafka", err)
+	}
+	if err := hc.AddCheck("Kafka reindex task counts producer", reindexTaskCounts.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for kafka", err)
 	}

@@ -39,3 +39,27 @@ func (p ContentUpdatedProducer) ContentUpdate(ctx context.Context, cfg *config.C
 	}
 	return nil
 }
+
+// ReindexTaskCountsProducer produces kafka messages for instances which have been successfully processed.
+type ReindexTaskCountsProducer struct {
+	Marshaller Marshaller
+	Producer   dpkafka.IProducer
+}
+
+// TaskCounts produce a kafka message for an instance which has been successfully processed.
+func (p ReindexTaskCountsProducer) TaskCounts(ctx context.Context, cfg *config.Config, event models.ReindexTaskCounts) error {
+	if cfg.EnableReindexTaskCounts {
+		log.Info(ctx, "EnableReindexTaskCountsFlag Flag is enabled")
+		eventBytes, err := p.Marshaller.Marshal(event)
+		if err != nil {
+			log.Fatal(ctx, "failed to marshal event", err)
+			return err
+		}
+
+		p.Producer.Channels().Output <- eventBytes
+		log.Info(ctx, "event produced successfully", log.Data{"event": event, "package": "event.ContentUpdate"})
+	} else {
+		log.Info(ctx, "EnableReindexTaskCountsFlag Flag is disabled")
+	}
+	return nil
+}

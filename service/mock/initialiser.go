@@ -42,7 +42,10 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetKafkaProducerFunc: func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error) {
 //				panic("mock out the DoGetKafkaProducer method")
 //			},
-//			DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+//			DoGetKafkaProducerForReindexTaskCountsFunc: func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error) {
+//				panic("mock out the DoGetKafkaProducerForReindexTaskCounts method")
+//			},
+//			DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 //				panic("mock out the DoGetZebedeeClient method")
 //			},
 //		}
@@ -70,8 +73,11 @@ type InitialiserMock struct {
 	// DoGetKafkaProducerFunc mocks the DoGetKafkaProducer method.
 	DoGetKafkaProducerFunc func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 
+	// DoGetKafkaProducerForReindexTaskCountsFunc mocks the DoGetKafkaProducerForReindexTaskCounts method.
+	DoGetKafkaProducerForReindexTaskCountsFunc func(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
+
 	// DoGetZebedeeClientFunc mocks the DoGetZebedeeClient method.
-	DoGetZebedeeClientFunc func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient
+	DoGetZebedeeClientFunc func(cfg *config.Config) clients.ZebedeeClient
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -119,21 +125,27 @@ type InitialiserMock struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
 		}
+		// DoGetKafkaProducerForReindexTaskCounts holds details about calls to the DoGetKafkaProducerForReindexTaskCounts method.
+		DoGetKafkaProducerForReindexTaskCounts []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+		}
 		// DoGetZebedeeClient holds details about calls to the DoGetZebedeeClient method.
 		DoGetZebedeeClient []struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
-			// HcCli is the hcCli argument value.
-			HcCli *health.Client
 		}
 	}
-	lockDoGetDatasetAPIClient sync.RWMutex
-	lockDoGetHTTPServer       sync.RWMutex
-	lockDoGetHealthCheck      sync.RWMutex
-	lockDoGetHealthClient     sync.RWMutex
-	lockDoGetKafkaConsumer    sync.RWMutex
-	lockDoGetKafkaProducer    sync.RWMutex
-	lockDoGetZebedeeClient    sync.RWMutex
+	lockDoGetDatasetAPIClient                  sync.RWMutex
+	lockDoGetHTTPServer                        sync.RWMutex
+	lockDoGetHealthCheck                       sync.RWMutex
+	lockDoGetHealthClient                      sync.RWMutex
+	lockDoGetKafkaConsumer                     sync.RWMutex
+	lockDoGetKafkaProducer                     sync.RWMutex
+	lockDoGetKafkaProducerForReindexTaskCounts sync.RWMutex
+	lockDoGetZebedeeClient                     sync.RWMutex
 }
 
 // DoGetDatasetAPIClient calls DoGetDatasetAPIClientFunc.
@@ -356,22 +368,56 @@ func (mock *InitialiserMock) DoGetKafkaProducerCalls() []struct {
 	return calls
 }
 
+// DoGetKafkaProducerForReindexTaskCounts calls DoGetKafkaProducerForReindexTaskCountsFunc.
+func (mock *InitialiserMock) DoGetKafkaProducerForReindexTaskCounts(ctx context.Context, cfg *config.Config) (kafka.IProducer, error) {
+	if mock.DoGetKafkaProducerForReindexTaskCountsFunc == nil {
+		panic("InitialiserMock.DoGetKafkaProducerForReindexTaskCountsFunc: method is nil but Initialiser.DoGetKafkaProducerForReindexTaskCounts was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetKafkaProducerForReindexTaskCounts.Lock()
+	mock.calls.DoGetKafkaProducerForReindexTaskCounts = append(mock.calls.DoGetKafkaProducerForReindexTaskCounts, callInfo)
+	mock.lockDoGetKafkaProducerForReindexTaskCounts.Unlock()
+	return mock.DoGetKafkaProducerForReindexTaskCountsFunc(ctx, cfg)
+}
+
+// DoGetKafkaProducerForReindexTaskCountsCalls gets all the calls that were made to DoGetKafkaProducerForReindexTaskCounts.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetKafkaProducerForReindexTaskCountsCalls())
+func (mock *InitialiserMock) DoGetKafkaProducerForReindexTaskCountsCalls() []struct {
+	Ctx context.Context
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}
+	mock.lockDoGetKafkaProducerForReindexTaskCounts.RLock()
+	calls = mock.calls.DoGetKafkaProducerForReindexTaskCounts
+	mock.lockDoGetKafkaProducerForReindexTaskCounts.RUnlock()
+	return calls
+}
+
 // DoGetZebedeeClient calls DoGetZebedeeClientFunc.
-func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config) clients.ZebedeeClient {
 	if mock.DoGetZebedeeClientFunc == nil {
 		panic("InitialiserMock.DoGetZebedeeClientFunc: method is nil but Initialiser.DoGetZebedeeClient was just called")
 	}
 	callInfo := struct {
-		Cfg   *config.Config
-		HcCli *health.Client
+		Cfg *config.Config
 	}{
-		Cfg:   cfg,
-		HcCli: hcCli,
+		Cfg: cfg,
 	}
 	mock.lockDoGetZebedeeClient.Lock()
 	mock.calls.DoGetZebedeeClient = append(mock.calls.DoGetZebedeeClient, callInfo)
 	mock.lockDoGetZebedeeClient.Unlock()
-	return mock.DoGetZebedeeClientFunc(cfg, hcCli)
+	return mock.DoGetZebedeeClientFunc(cfg)
 }
 
 // DoGetZebedeeClientCalls gets all the calls that were made to DoGetZebedeeClient.
@@ -379,12 +425,10 @@ func (mock *InitialiserMock) DoGetZebedeeClient(cfg *config.Config, hcCli *healt
 //
 //	len(mockedInitialiser.DoGetZebedeeClientCalls())
 func (mock *InitialiserMock) DoGetZebedeeClientCalls() []struct {
-	Cfg   *config.Config
-	HcCli *health.Client
+	Cfg *config.Config
 } {
 	var calls []struct {
-		Cfg   *config.Config
-		HcCli *health.Client
+		Cfg *config.Config
 	}
 	mock.lockDoGetZebedeeClient.RLock()
 	calls = mock.calls.DoGetZebedeeClient

@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	gitCommitHash = "3t7e5s1t4272646ef477f8ed755"
-	appVersion    = "v1.2.3"
+	gitCommitHash      = "3t7e5s1t4272646ef477f8ed755"
+	appVersion         = "v1.2.3"
+	ComponentTestGroup = "component-test" // kafka group name for the component test consumer
 )
 
 type state string
@@ -36,8 +37,8 @@ type Component struct {
 	errorFeature      componenttest.ErrorFeature
 	errorChan         chan error
 	fakeAPIRouter     *FakeAPI
-	fakeKafkaConsumer kafka.IConsumerGroup
-	fakeKafkaProducer kafka.IProducer
+	fakeKafkaConsumer *kafkatest.Consumer
+	fakeKafkaProducer *kafkatest.Producer
 	HTTPServer        *http.Server
 	serviceList       *service.ExternalServiceList
 	serviceRunning    bool
@@ -64,14 +65,38 @@ func NewSearchDataFinderComponent() (*Component, error) {
 
 	c.cfg = cfg
 
-	consumer := kafkatest.NewMessageConsumer(true)
-	consumer.CheckerFunc = funcCheck
-	consumer.StartFunc = func() error { return nil }
-	producer := kafkatest.NewMessageProducer(true)
-	producer.CheckerFunc = funcCheck
+	if c.fakeKafkaConsumer, err = kafkatest.NewConsumer(
+		ctx,
+		&kafka.ConsumerGroupConfig{
+			BrokerAddrs:  cfg.KafkaConfig.Brokers,
+			Topic:        cfg.KafkaConfig.ReindexRequestedTopic,
+			GroupName:    ComponentTestGroup,
+			KafkaVersion: &cfg.KafkaConfig.Version,
+		},
+		&kafkatest.ConsumerConfig{
+			NumPartitions:     10,
+			ChannelBufferSize: 10,
+			InitAtCreation:    true,
+		},
+	); err != nil {
+		return nil, fmt.Errorf("error creating kafka consumer: %w", err)
+	}
 
-	c.fakeKafkaConsumer = consumer
-	c.fakeKafkaProducer = producer
+	c.fakeKafkaConsumer.Mock.CheckerFunc = funcCheck
+	c.fakeKafkaConsumer.Mock.StartFunc = func() error { return nil }
+
+	if c.fakeKafkaProducer, err = kafkatest.NewProducer(
+		ctx,
+		&kafka.ProducerConfig{
+			BrokerAddrs:  cfg.KafkaConfig.Brokers,
+			Topic:        cfg.KafkaConfig.ContentUpdatedTopic,
+			KafkaVersion: &cfg.KafkaConfig.Version,
+		},
+		nil,
+	); err != nil {
+		return nil, fmt.Errorf("error creating kafka producer: %w", err)
+	}
+	c.fakeKafkaProducer.Mock.CheckerFunc = funcCheck
 
 	c.fakeAPIRouter = NewFakeAPI()
 	c.cfg.APIRouterURL = c.fakeAPIRouter.fakeHTTP.ResolveURL("")
@@ -80,15 +105,18 @@ func NewSearchDataFinderComponent() (*Component, error) {
 
 	initMock := &mock.InitialiserMock{
 		DoGetKafkaConsumerFunc: func(ctx context.Context, kafkaCfg *config.KafkaConfig) (kafkaConsumer kafka.IConsumerGroup, err error) {
-			return c.fakeKafkaConsumer, nil
+			return c.fakeKafkaConsumer.Mock, nil
 		},
 		DoGetKafkaProducerFunc: func(ctx context.Context, config *config.Config) (kafkaConsumer kafka.IProducer, err error) {
-			return c.fakeKafkaProducer, nil
+			return c.fakeKafkaProducer.Mock, nil
+		},
+		DoGetKafkaProducerForReindexTaskCountsFunc: func(ctx context.Context, config *config.Config) (kafkaConsumer kafka.IProducer, err error) {
+			return c.fakeKafkaProducer.Mock, nil
 		},
 		DoGetHealthCheckFunc:  getHealthCheckOK,
 		DoGetHealthClientFunc: c.getHealthClientOK,
 		DoGetHTTPServerFunc:   c.getHTTPServer,
-		DoGetZebedeeClientFunc: func(cfg *config.Config, hcCli *health.Client) clients.ZebedeeClient {
+		DoGetZebedeeClientFunc: func(cfg *config.Config) clients.ZebedeeClient {
 			return c.zebedeeClient
 		},
 		DoGetDatasetAPIClientFunc: func(hcCli *health.Client) clients.DatasetAPIClient {
@@ -135,7 +163,7 @@ func (c *Component) Close() error {
 
 func (c *Component) Reset() (*Component, error) {
 	ctx := context.WithValue(context.Background(), s, "empty")
-	if err := c.fakeKafkaConsumer.Checker(ctx, healthcheck.NewCheckState("topic-test")); err != nil {
+	if err := c.fakeKafkaConsumer.Mock.Checker(ctx, healthcheck.NewCheckState("topic-test")); err != nil {
 		return c, err
 	}
 
