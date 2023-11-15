@@ -113,10 +113,17 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 
 	log.Info(ctx, "publish to content updated topic", logData)
 
-	// only the first 10 docs are retrieved for testing and performance purposes
 	// it takes more than 10 mins to retrieve all document urls from zebedee
-	// TODO: remove (i < 10) condition when this app has been completely implemented
-	for i := 0; (i < 10) && (i < totalZebedeeDocs); i++ {
+	// use ZEBEDEE_REQUEST_LIMIT to limit this for performance / testing / debugging
+	limit := 0
+
+	if cfg.ZebedeeRequestLimit == 0 || cfg.ZebedeeRequestLimit > totalZebedeeDocs {
+		limit = totalZebedeeDocs
+	} else {
+		limit = cfg.ZebedeeRequestLimit
+	}
+
+	for i := 0; i < limit; i++ {
 		err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 			URI:         publishedIndex.Items[i].URI,
 			JobID:       reindexReqEvent.JobID,

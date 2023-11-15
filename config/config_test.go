@@ -32,6 +32,7 @@ func TestConfig(t *testing.T) {
 				So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")
 				So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
 				So(cfg.ServiceAuthToken, ShouldEqual, "")
+				So(cfg.ZebedeeRequestLimit, ShouldEqual, 10)
 			})
 			Convey("Then a second call to config should return the same config", func() {
 				newCfg, newErr := Get()

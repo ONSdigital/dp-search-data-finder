@@ -38,6 +38,7 @@ An example event can be created using the helper script, `make produce`.
 | KAFKA_VERSION                 | "1.0.2"                           | The kafka version that this service expects to connect to
 | ZEBEDEE_CLIENT_TIMEOUT        | 30s                               | Time to wait for the zebedee client to respond to requests e.g. the published index request
 | ZEBEDEE_URL                   | http://localhost:8082             | The URL to zebedee
+| ZEBEDEE_REQUEST_LIMIT         | 10                                | Optional limit for development purposes on zebedee requests. Setting this to 0 removes the limiter.
 
 [kafka TLS doc]: https://github.com/ONSdigital/dp-kafka/tree/main/examples#tls
 
