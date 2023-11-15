@@ -17,6 +17,8 @@ var (
 	defaultGoRoutineCount    = 10
 	maxConcurrentExtractions = 20
 	DefaultPaginationLimit   = 500
+	ZebedeeDataType          = "legacy"
+	DatasetDataType          = "datasets"
 )
 
 const (
@@ -33,7 +35,7 @@ type DatasetEditionMetadata struct {
 type ReindexRequestedHandler struct {
 	ZebedeeCli                clients.ZebedeeClient
 	DatasetAPICli             clients.DatasetAPIClient
-	ContentUpdatedProducer    event.ContentUpdatedProducer
+	ContentUpdatedProducer    event.ContentUpdater
 	ReindexTaskCountsProducer event.ReindexTaskCountsProducer
 	Config                    *config.Config
 }
@@ -129,6 +131,7 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 			JobID:       reindexReqEvent.JobID,
 			TraceID:     reindexReqEvent.TraceID,
 			SearchIndex: reindexReqEvent.SearchIndex,
+			DataType:    ZebedeeDataType,
 		})
 		if err != nil {
 			log.Error(ctx, "failed to publish zebedee doc to content updated topic", err, log.Data{"request_params": nil})

@@ -2,11 +2,19 @@ package handler_test
 
 import (
 	"context"
+	"testing"
 
 	datasetClient "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	zebedeeClient "github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	clientMock "github.com/ONSdigital/dp-search-data-finder/clients/mock"
+
+	"github.com/ONSdigital/dp-search-data-finder/config"
+	"github.com/ONSdigital/dp-search-data-finder/event/mock"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/pkg/errors"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
@@ -22,88 +30,135 @@ var (
 	getPublishedIndexEmpty = func(ctx context.Context, publishedIndexRequestParams *zebedeeClient.PublishedIndexRequestParams) (zebedeeClient.PublishedIndex, error) {
 		return zebedeeClient.PublishedIndex{}, errZebedee
 	}
+
+	mockZebedeePublishedIndexResponse = zebedeeClient.PublishedIndex{
+		Count: 1,
+		Limit: 0,
+		Items: []zebedeeClient.PublishedIndexItem{
+			{URI: "http://www.ons.gov.uk"},
+		},
+		Offset:     0,
+		TotalCount: 1,
+	}
+
 	getPublishedIndexFunc = func(ctx context.Context, publishedIndexRequestParams *zebedeeClient.PublishedIndexRequestParams) (zebedeeClient.PublishedIndex, error) {
-		return zebedeeClient.PublishedIndex{}, nil
+		return mockZebedeePublishedIndexResponse, nil
+	}
+
+	mockDatasetAPIResponse = datasetClient.List{
+		Count: 1,
+		Limit: 0,
+		Items: []datasetClient.Dataset{
+			{
+				ID: "RM007",
+				Current: &datasetClient.DatasetDetails{
+					ID: "RM007",
+				}},
+		},
+		Offset:     0,
+		TotalCount: 1,
 	}
 
 	errDatasetAPI = errors.New("dataset-api test error")
-	getDatasetsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, q *datasetClient.QueryParams) (datasetClient.List, error) {
+	getDatasetsOk = func(_ context.Context, _ string, _ string, _ string, q *datasetClient.QueryParams) (datasetClient.List, error) {
+		if q.Offset == 0 {
+			return mockDatasetAPIResponse, nil
+		}
 		return datasetClient.List{}, nil
 	}
+
+	mockDatasetEditionAPIResponse = []datasetClient.EditionsDetails{
+		{
+			ID: "RM007",
+			Current: datasetClient.Edition{
+				ID: "1",
+				Links: datasetClient.Links{
+					LatestVersion: datasetClient.Link{
+						ID: "1",
+					},
+				},
+			},
+		},
+	}
 	getFullEditionsDetailsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, datasetID string) ([]datasetClient.EditionsDetails, error) {
-		return []datasetClient.EditionsDetails{}, nil
+		return mockDatasetEditionAPIResponse, nil
+	}
+	mockDatasetVersionAPIResponse = datasetClient.Metadata{
+		DatasetLinks: datasetClient.Links{
+			LatestVersion: datasetClient.Link{
+				URL: "http://www.ons.gov.uk/datasets/RM007",
+			},
+		},
 	}
 	getVersionMetadataOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, id string, edition string, version string) (datasetClient.Metadata, error) {
-		return datasetClient.Metadata{}, nil
+		return mockDatasetVersionAPIResponse, nil
 	}
 	getDatasetsError = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, q *datasetClient.QueryParams) (datasetClient.List, error) {
 		return datasetClient.List{}, errDatasetAPI
 	}
 )
 
-// TODO: This will be enabled once the dataset uri extraction code is added.
-//func TestReindexRequestedHandler_Handle(t *testing.T) {
-//	testCfg, err := config.Get()
-//	if err != nil {
-//		t.Errorf("failed to retrieve default configuration, error is: %v", err)
-//	}
+func TestHandle(t *testing.T) {
+	testCfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error is: %v", err)
+	}
 
-//Convey("Given an event handler working successfully, and an event containing a URI", t, func() {
-//	zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-//	datasetAPIMock := &clientMock.DatasetAPIClientMock{
-//		GetDatasetsFunc:            getDatasetsOk,
-//		GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
-//		GetVersionMetadataFunc:     getVersionMetadataOk,
-//	}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMock}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Zebedee and Dataset API are called to get document urls", func() {
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
+	testCfg.EnablePublishContentUpdatedTopic = true
 
-//Convey("Given an event handler not working successfully with Zebedee, and an event containing a jobId", t, func() {
-//	zebedeeMockInError := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexEmpty}
-//	datasetAPIMock := &clientMock.DatasetAPIClientMock{
-//		GetDatasetsFunc:            getDatasetsOk,
-//		GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
-//		GetVersionMetadataFunc:     getVersionMetadataOk,
-//	}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMockInError, DatasetAPICli: datasetAPIMock}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Zebedee is called 1 time with the expected error which is logged", func() {
-//			So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
+	expectedLegacyContentUpdatedEvent := models.ContentUpdated{
+		URI:         "http://www.ons.gov.uk",
+		JobID:       "",
+		TraceID:     "",
+		SearchIndex: "",
+		DataType:    "legacy",
+	}
 
-//Convey("Given an event handler not working successfully with Dataset API, and an event containing a jobId", t, func() {
-//	zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-//	datasetAPIMockErr := &clientMock.DatasetAPIClientMock{GetDatasetsFunc: getDatasetsError}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMockErr}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Dataset API is called 1 time with the expected error which is logged", func() {
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMockErr.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMockErr.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
-//}
+	expectedDatasetContentUpdatedEvent := &models.ContentUpdated{
+		URI:         "http://www.ons.gov.uk/datasets/RM007",
+		JobID:       "",
+		TraceID:     "",
+		SearchIndex: "",
+		DataType:    "datasets",
+	}
+
+	Convey("Given an event handler, working zebedee and dataset clients, kafka producer and an event containing a URI", t, func() {
+		zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		datasetAPIMock := &clientMock.DatasetAPIClientMock{
+			GetDatasetsFunc:            getDatasetsOk,
+			GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
+			GetVersionMetadataFunc:     getVersionMetadataOk,
+		}
+
+		contentUpdaterMock := &mock.ContentUpdaterMock{
+			ContentUpdateFunc: func(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
+				return nil
+			},
+		}
+
+		eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMock, ContentUpdatedProducer: contentUpdaterMock}
+
+		Convey("When given a valid event", func() {
+			eventHandler.Handle(testCtx, &testEvent)
+
+			Convey("Then Zebedee and Dataset API are called to get document urls", func() {
+				So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
+				So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
+				So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
+				So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 2)
+			})
+
+			Convey("Then a legacy event should be called to be produced", func() {
+				So(contentUpdaterMock.ContentUpdateCalls(), ShouldHaveLength, 2)
+				So(contentUpdaterMock.ContentUpdateCalls()[0].Event.URI, ShouldEqual, expectedLegacyContentUpdatedEvent.URI)
+				So(contentUpdaterMock.ContentUpdateCalls()[0].Event.DataType, ShouldEqual, expectedLegacyContentUpdatedEvent.DataType)
+			})
+
+			Convey("Then a datasets event should be called to be produced", func() {
+				So(contentUpdaterMock.ContentUpdateCalls(), ShouldHaveLength, 2)
+				So(contentUpdaterMock.ContentUpdateCalls()[1].Event.URI, ShouldEqual, expectedDatasetContentUpdatedEvent.URI)
+				So(contentUpdaterMock.ContentUpdateCalls()[1].Event.DataType, ShouldEqual, expectedDatasetContentUpdatedEvent.DataType)
+			})
+		})
+	})
+}
