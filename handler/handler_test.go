@@ -108,17 +108,17 @@ func TestHandle(t *testing.T) {
 
 	expectedLegacyContentUpdatedEvent := models.ContentUpdated{
 		URI:         "http://www.ons.gov.uk",
-		JobID:       "",
-		TraceID:     "",
-		SearchIndex: "",
+		JobID:       testEvent.JobID,
+		TraceID:     testEvent.TraceID,
+		SearchIndex: testEvent.SearchIndex,
 		DataType:    "legacy",
 	}
 
-	expectedDatasetContentUpdatedEvent := &models.ContentUpdated{
+	expectedDatasetContentUpdatedEvent := models.ContentUpdated{
 		URI:         "http://www.ons.gov.uk/datasets/RM007",
-		JobID:       "",
-		TraceID:     "",
-		SearchIndex: "",
+		JobID:       testEvent.JobID,
+		TraceID:     testEvent.TraceID,
+		SearchIndex: testEvent.SearchIndex,
 		DataType:    "datasets",
 	}
 
@@ -148,16 +148,21 @@ func TestHandle(t *testing.T) {
 				So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 2)
 			})
 
+			// Due to parallel calls, the events can end up in any order
+			events := make([]models.ContentUpdated, len(contentUpdaterMock.ContentUpdateCalls()))
+
+			for i, call := range contentUpdaterMock.ContentUpdateCalls() {
+				events[i] = call.Event
+			}
+
 			Convey("Then a legacy event should be called to be produced", func() {
-				So(contentUpdaterMock.ContentUpdateCalls(), ShouldHaveLength, 2)
-				So(contentUpdaterMock.ContentUpdateCalls()[0].Event.URI, ShouldEqual, expectedLegacyContentUpdatedEvent.URI)
-				So(contentUpdaterMock.ContentUpdateCalls()[0].Event.DataType, ShouldEqual, expectedLegacyContentUpdatedEvent.DataType)
+				So(events, ShouldHaveLength, 2)
+				So(events, ShouldContain, expectedLegacyContentUpdatedEvent)
 			})
 
 			Convey("Then a datasets event should be called to be produced", func() {
-				So(contentUpdaterMock.ContentUpdateCalls(), ShouldHaveLength, 2)
-				So(contentUpdaterMock.ContentUpdateCalls()[1].Event.URI, ShouldEqual, expectedDatasetContentUpdatedEvent.URI)
-				So(contentUpdaterMock.ContentUpdateCalls()[1].Event.DataType, ShouldEqual, expectedDatasetContentUpdatedEvent.DataType)
+				So(events, ShouldHaveLength, 2)
+				So(events, ShouldContain, expectedDatasetContentUpdatedEvent)
 			})
 		})
 	})
