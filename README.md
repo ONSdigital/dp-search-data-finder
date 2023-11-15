@@ -19,7 +19,9 @@ An example event can be created using the helper script, `make produce`.
 
 | Environment variable          | Default                           | Description
 | ----------------------------- | --------------------------------- | -----------
+| API_ROUTER_URL                | "http://localhost:23200/v1"       | API router URL
 | BIND_ADDR                     | "localhost:28000"                 | The host and port to bind to
+| ENABLE_PUBLISH_CONTENT_UPDATED_TOPIC | false                      | Enables content update topic to be published to
 | CONTENT_UPDATED_TOPIC_FLAG    | false                             | produce events only if set to `true`
 | GRACEFUL_SHUTDOWN_TIMEOUT     | 5s                                | The graceful shutdown timeout in seconds (`time.Duration` format)
 | HEALTHCHECK_CRITICAL_TIMEOUT  | 90s                               | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
