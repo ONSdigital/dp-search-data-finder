@@ -1,26 +1,34 @@
 module github.com/ONSdigital/dp-search-data-finder
 
-go 1.19
+go 1.21
 
 // fix vulnerability: CVE-2020-15114 in etcd v3.3.13+incompatible
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
+// to avoid the following vulnerabilities:
+//     - CVE-2023-32731 # pkg:google.golang.org/grpc
+replace google.golang.org/grpc => google.golang.org/grpc v1.55.0
+
+// to avoid the following vulnerabilities:
+//     - CVE-2023-45142 # pkg: github.com/prometheus/client_golang
+replace github.com/spf13/cobra => github.com/spf13/cobra v1.4.0
+
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.191.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.252.0
 	github.com/ONSdigital/dp-component-test v0.8.0
-	github.com/ONSdigital/dp-healthcheck v1.5.0
+	github.com/ONSdigital/dp-healthcheck v1.6.0
 	github.com/ONSdigital/dp-kafka/v3 v3.8.0
 	github.com/ONSdigital/dp-net v1.5.0
-	github.com/ONSdigital/dp-net/v2 v2.6.0
-	github.com/ONSdigital/log.go/v2 v2.3.0
+	github.com/ONSdigital/dp-net/v2 v2.11.0
+	github.com/ONSdigital/log.go/v2 v2.4.0
 	github.com/cucumber/godog v0.12.5
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/pkg/errors v0.9.1
 	github.com/rdumont/assistdog v0.0.0-20201106100018-168b06230d14
-	github.com/smartystreets/goconvey v1.7.2
-	github.com/stretchr/testify v1.8.0
+	github.com/smartystreets/goconvey v1.8.0
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
@@ -37,7 +45,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
@@ -65,13 +73,12 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
-	github.com/smartystreets/assertions v1.13.0 // indirect
+	github.com/smartystreets/assertions v1.13.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -79,10 +86,10 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.mongodb.org/mongo-driver v1.10.3 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
