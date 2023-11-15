@@ -152,8 +152,7 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg
 	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := h.retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
 	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
-	urlCount := h.logExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
-	// TODO - logExtractedDatasetURLs is temporary and should be replaced in the future
+	urlCount := h.sendExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
 	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
 	log.Info(ctx, "successfully extracted all datasets")
 	taskNames := strings.Split(cfg.TaskNameValues, ",")
@@ -271,17 +270,20 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 	return datasetURLChan
 }
 
-// TODO - logExtractedDatasetURLs is temporary.
-// The dataset url should be sent to the content-updated topic here in the future.
-// But for the time being, we are going to extract the urls and print them
-func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
+func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
 	var urlListCount int
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
 	go func() {
+		defer wg.Done()
 		defer wgDataset.Done()
 		for datasetURL := range datasetURLChan {
-			log.Info(ctx, "log extracted dataset urls")
+			log.Info(ctx, "send extracted dataset urls")
 			err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
 				URI:         datasetURL,
+				DataType:    DatasetDataType,
 				JobID:       reindexReqEvent.JobID,
 				TraceID:     reindexReqEvent.TraceID,
 				SearchIndex: reindexReqEvent.SearchIndex,
@@ -293,6 +295,7 @@ func (h *ReindexRequestedHandler) logExtractedDatasetURLs(ctx context.Context, w
 			urlListCount++
 		}
 	}()
+	wg.Wait()
 	return urlListCount
 }
 
