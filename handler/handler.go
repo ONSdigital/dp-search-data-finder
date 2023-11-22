@@ -155,8 +155,8 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg
 	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := h.retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
 	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
-	urlCount := h.sendExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
 	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
+	urlCount := h.sendExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
 	log.Info(ctx, "successfully extracted all datasets")
 	taskNames := strings.Split(cfg.TaskNameValues, ",")
 	task <- taskDetails{
@@ -275,30 +275,23 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 
 func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
 	var urlListCount int
-	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		defer wgDataset.Done()
-		for datasetURL := range datasetURLChan {
-			log.Info(ctx, "send extracted dataset urls")
-			err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
-				URI:         datasetURL,
-				DataType:    DatasetDataType,
-				JobID:       reindexReqEvent.JobID,
-				TraceID:     reindexReqEvent.TraceID,
-				SearchIndex: reindexReqEvent.SearchIndex,
-			})
-			if err != nil {
-				log.Error(ctx, "failed to publish datasets to content update topic", err)
-				return
-			}
-			urlListCount++
+	for datasetURL := range datasetURLChan {
+		log.Info(ctx, "send extracted dataset urls")
+		err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
+			URI:         datasetURL,
+			DataType:    DatasetDataType,
+			JobID:       reindexReqEvent.JobID,
+			TraceID:     reindexReqEvent.TraceID,
+			SearchIndex: reindexReqEvent.SearchIndex,
+		})
+		if err != nil {
+			log.Error(ctx, "failed to publish datasets to content update topic", err)
+			break
 		}
-	}()
-	wg.Wait()
+		urlListCount++
+	}
+
 	return urlListCount
 }
 
