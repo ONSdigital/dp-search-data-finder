@@ -2,6 +2,8 @@ package handler_test
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"testing"
 
 	datasetClient "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
@@ -35,7 +37,9 @@ var (
 		Count: 1,
 		Limit: 0,
 		Items: []zebedeeClient.PublishedIndexItem{
-			{URI: "http://www.ons.gov.uk"},
+			{
+				URI: "http://www.ons.gov.uk",
+			},
 		},
 		Offset:     0,
 		TotalCount: 1,
@@ -45,56 +49,88 @@ var (
 		return mockZebedeePublishedIndexResponse, nil
 	}
 
-	mockDatasetAPIResponse = datasetClient.List{
-		Count: 1,
-		Limit: 0,
-		Items: []datasetClient.Dataset{
-			{
-				ID: "RM007",
+	generateFakeDatasetID = func(num int) string {
+		return fmt.Sprintf("RM%s", strconv.Itoa(num))
+	}
+
+	generateMockDatasetAPIResponse = func(numberOfDatasets int) datasetClient.List {
+		items := make([]datasetClient.Dataset, numberOfDatasets)
+
+		for i := 0; i < numberOfDatasets; i++ {
+			newID := generateFakeDatasetID(i + 1)
+			newItem := datasetClient.Dataset{
+				ID: newID,
 				Current: &datasetClient.DatasetDetails{
-					ID: "RM007",
-				}},
-		},
-		Offset:     0,
-		TotalCount: 1,
+					ID: newID,
+				},
+			}
+			items = append(items, newItem)
+		}
+
+		mockDatasetAPIResponse := datasetClient.List{
+			Count: numberOfDatasets,
+			Limit: 0,
+			Items: items,
+		}
+
+		return mockDatasetAPIResponse
 	}
 
 	errDatasetAPI = errors.New("dataset-api test error")
 	getDatasetsOk = func(_ context.Context, _ string, _ string, _ string, q *datasetClient.QueryParams) (datasetClient.List, error) {
 		if q.Offset == 0 {
-			return mockDatasetAPIResponse, nil
+			return generateMockDatasetAPIResponse(2), nil
 		}
 		return datasetClient.List{}, nil
 	}
 
-	mockDatasetEditionAPIResponse = []datasetClient.EditionsDetails{
-		{
-			ID: "RM007",
-			Current: datasetClient.Edition{
-				ID: "1",
-				Links: datasetClient.Links{
-					LatestVersion: datasetClient.Link{
-						ID: "1",
+	generateMockDatasetEditionAPIResponse = func(id string) []datasetClient.EditionsDetails {
+		return []datasetClient.EditionsDetails{
+			{
+				ID: id,
+				Current: datasetClient.Edition{
+					ID: id,
+					Links: datasetClient.Links{
+						LatestVersion: datasetClient.Link{
+							ID: id,
+						},
 					},
 				},
 			},
-		},
+		}
 	}
+
 	getFullEditionsDetailsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, datasetID string) ([]datasetClient.EditionsDetails, error) {
-		return mockDatasetEditionAPIResponse, nil
+		return generateMockDatasetEditionAPIResponse(datasetID), nil
 	}
-	mockDatasetVersionAPIResponse = datasetClient.Metadata{
-		DatasetLinks: datasetClient.Links{
-			LatestVersion: datasetClient.Link{
-				URL: "http://www.ons.gov.uk/datasets/RM007",
+
+	generateMockDatasetVersionAPIResponse = func(id string) datasetClient.Metadata {
+		return datasetClient.Metadata{
+			DatasetLinks: datasetClient.Links{
+				LatestVersion: datasetClient.Link{
+					URL: fmt.Sprintf("http://www.ons.gov.uk/datasets/%s", id),
+				},
 			},
-		},
+		}
 	}
+
 	getVersionMetadataOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, id string, edition string, version string) (datasetClient.Metadata, error) {
-		return mockDatasetVersionAPIResponse, nil
+		return generateMockDatasetVersionAPIResponse(id), nil
 	}
 	getDatasetsError = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, q *datasetClient.QueryParams) (datasetClient.List, error) {
 		return datasetClient.List{}, errDatasetAPI
+	}
+
+	generateExpectedDatasetContentUpdatedEvent = func(id int) models.ContentUpdated {
+		datasetID := generateFakeDatasetID(id)
+
+		return models.ContentUpdated{
+			URI:         fmt.Sprintf("http://www.ons.gov.uk/datasets/%s", datasetID),
+			JobID:       testEvent.JobID,
+			TraceID:     testEvent.TraceID,
+			SearchIndex: testEvent.SearchIndex,
+			DataType:    "datasets",
+		}
 	}
 )
 
@@ -112,14 +148,6 @@ func TestHandle(t *testing.T) {
 		TraceID:     testEvent.TraceID,
 		SearchIndex: testEvent.SearchIndex,
 		DataType:    "legacy",
-	}
-
-	expectedDatasetContentUpdatedEvent := models.ContentUpdated{
-		URI:         "http://www.ons.gov.uk/datasets/RM007",
-		JobID:       testEvent.JobID,
-		TraceID:     testEvent.TraceID,
-		SearchIndex: testEvent.SearchIndex,
-		DataType:    "datasets",
 	}
 
 	Convey("Given an event handler, working zebedee and dataset clients, kafka producer and an event containing a URI", t, func() {
@@ -156,13 +184,14 @@ func TestHandle(t *testing.T) {
 			}
 
 			Convey("Then a legacy event should be called to be produced", func() {
-				So(events, ShouldHaveLength, 2)
+				So(events, ShouldHaveLength, 3)
 				So(events, ShouldContain, expectedLegacyContentUpdatedEvent)
 			})
 
 			Convey("Then a datasets event should be called to be produced", func() {
-				So(events, ShouldHaveLength, 2)
-				So(events, ShouldContain, expectedDatasetContentUpdatedEvent)
+				So(events, ShouldHaveLength, 3)
+				So(events, ShouldContain, generateExpectedDatasetContentUpdatedEvent(1))
+				So(events, ShouldContain, generateExpectedDatasetContentUpdatedEvent(2))
 			})
 		})
 	})

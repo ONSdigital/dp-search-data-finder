@@ -151,12 +151,12 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested, task chan taskDetails) {
 	log.Info(ctx, "extract and send dataset urls")
 	var wgDataset sync.WaitGroup
-	wgDataset.Add(4)
+	wgDataset.Add(3)
 	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
 	editionChan := h.retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
 	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
-	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
 	urlCount := h.sendExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
+	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
 	log.Info(ctx, "successfully extracted all datasets")
 	taskNames := strings.Split(cfg.TaskNameValues, ",")
 	task <- taskDetails{
@@ -267,15 +267,14 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 				}
 			}()
 		}
-		log.Info(ctx, "successfully handled metadata")
 		wg.Wait()
+		log.Info(ctx, "successfully handled metadata")
 	}()
 	return datasetURLChan
 }
 
 func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
 	var urlListCount int
-
 	for datasetURL := range datasetURLChan {
 		log.Info(ctx, "send extracted dataset urls")
 		err := h.ContentUpdatedProducer.ContentUpdate(ctx, cfg, models.ContentUpdated{
@@ -291,7 +290,6 @@ func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, 
 		}
 		urlListCount++
 	}
-
 	return urlListCount
 }
 
