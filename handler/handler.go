@@ -150,13 +150,10 @@ func (h *ReindexRequestedHandler) getAndSendZebedeeDocsURL(ctx context.Context, 
 
 func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg *config.Config, datasetAPICli clients.DatasetAPIClient, reindexReqEvent *models.ReindexRequested, task chan taskDetails) {
 	log.Info(ctx, "extract and send dataset urls")
-	var wgDataset sync.WaitGroup
-	wgDataset.Add(3)
-	datasetChan := h.extractDatasets(ctx, &wgDataset, datasetAPICli, cfg.ServiceAuthToken)
-	editionChan := h.retrieveDatasetEditions(ctx, &wgDataset, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
-	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, &wgDataset, datasetAPICli, editionChan, cfg.ServiceAuthToken)
-	urlCount := h.sendExtractedDatasetURLs(ctx, &wgDataset, cfg, datasetURLChan, reindexReqEvent)
-	wgDataset.Wait() // wait for the other go-routines to complete which extracts the dataset urls
+	datasetChan := h.extractDatasets(ctx, datasetAPICli, cfg.ServiceAuthToken)
+	editionChan := h.retrieveDatasetEditions(ctx, datasetAPICli, datasetChan, cfg.ServiceAuthToken)
+	datasetURLChan := h.getAndSendDatasetURLsFromLatestMetadata(ctx, datasetAPICli, editionChan, cfg.ServiceAuthToken)
+	urlCount := h.sendExtractedDatasetURLs(ctx, cfg, datasetURLChan, reindexReqEvent)
 	log.Info(ctx, "successfully extracted all datasets")
 	taskNames := strings.Split(cfg.TaskNameValues, ",")
 	task <- taskDetails{
@@ -165,12 +162,11 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLs(ctx context.Context, cfg
 	}
 }
 
-func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
+func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, serviceAuthToken string) chan dataset.Dataset {
 	log.Info(ctx, "extract datasets")
 	datasetChan := make(chan dataset.Dataset)
 	go func() {
 		defer close(datasetChan)
-		defer wgDataset.Done()
 		var offset = 0
 		var totalDocs = 0
 		for {
@@ -203,12 +199,11 @@ func (h *ReindexRequestedHandler) extractDatasets(ctx context.Context, wgDataset
 	return datasetChan
 }
 
-func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, datasetChan chan dataset.Dataset, serviceAuthToken string) chan DatasetEditionMetadata {
+func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, datasetChan chan dataset.Dataset, serviceAuthToken string) chan DatasetEditionMetadata {
 	log.Info(ctx, "retrieve dataset editions")
 	editionMetadataChan := make(chan DatasetEditionMetadata)
 	go func() {
 		defer close(editionMetadataChan)
-		defer wgDataset.Done()
 		var wg sync.WaitGroup
 		for i := 0; i < defaultGoRoutineCount; i++ {
 			wg.Add(1)
@@ -245,12 +240,11 @@ func (h *ReindexRequestedHandler) retrieveDatasetEditions(ctx context.Context, w
 	return editionMetadataChan
 }
 
-func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, wgDataset *sync.WaitGroup, datasetAPIClient clients.DatasetAPIClient, editionMetadata chan DatasetEditionMetadata, serviceAuthToken string) chan string {
+func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx context.Context, datasetAPIClient clients.DatasetAPIClient, editionMetadata chan DatasetEditionMetadata, serviceAuthToken string) chan string {
 	log.Info(ctx, "extract and send dataset url from the latest metadata")
 	datasetURLChan := make(chan string)
 	go func() {
 		defer close(datasetURLChan)
-		defer wgDataset.Done()
 		var wg sync.WaitGroup
 		for i := 0; i < defaultGoRoutineCount; i++ {
 			wg.Add(1)
@@ -273,7 +267,7 @@ func (h *ReindexRequestedHandler) getAndSendDatasetURLsFromLatestMetadata(ctx co
 	return datasetURLChan
 }
 
-func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, wgDataset *sync.WaitGroup, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
+func (h *ReindexRequestedHandler) sendExtractedDatasetURLs(ctx context.Context, cfg *config.Config, datasetURLChan chan string, reindexReqEvent *models.ReindexRequested) int {
 	var urlListCount int
 	for datasetURL := range datasetURLChan {
 		log.Info(ctx, "send extracted dataset urls")
