@@ -4,71 +4,87 @@
 package mock
 
 import (
+	"context"
+	"github.com/ONSdigital/dp-search-data-finder/config"
 	"github.com/ONSdigital/dp-search-data-finder/event"
+	"github.com/ONSdigital/dp-search-data-finder/models"
 	"sync"
 )
 
-// Ensure, that MarshallerMock does implement event.Marshaller.
+// Ensure, that ContentUpdaterMock does implement event.ContentUpdater.
 // If this is not the case, regenerate this file with moq.
-var _ event.Marshaller = &MarshallerMock{}
+var _ event.ContentUpdater = &ContentUpdaterMock{}
 
-// MarshallerMock is a mock implementation of event.Marshaller.
+// ContentUpdaterMock is a mock implementation of event.ContentUpdater.
 //
-// 	func TestSomethingThatUsesMarshaller(t *testing.T) {
+//	func TestSomethingThatUsesContentUpdater(t *testing.T) {
 //
-// 		// make and configure a mocked event.Marshaller
-// 		mockedMarshaller := &MarshallerMock{
-// 			MarshalFunc: func(s interface{}) ([]byte, error) {
-// 				panic("mock out the Marshal method")
-// 			},
-// 		}
+//		// make and configure a mocked event.ContentUpdater
+//		mockedContentUpdater := &ContentUpdaterMock{
+//			ContentUpdateFunc: func(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
+//				panic("mock out the ContentUpdate method")
+//			},
+//		}
 //
-// 		// use mockedMarshaller in code that requires event.Marshaller
-// 		// and then make assertions.
+//		// use mockedContentUpdater in code that requires event.ContentUpdater
+//		// and then make assertions.
 //
-// 	}
-type MarshallerMock struct {
-	// MarshalFunc mocks the Marshal method.
-	MarshalFunc func(s interface{}) ([]byte, error)
+//	}
+type ContentUpdaterMock struct {
+	// ContentUpdateFunc mocks the ContentUpdate method.
+	ContentUpdateFunc func(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Marshal holds details about calls to the Marshal method.
-		Marshal []struct {
-			// S is the s argument value.
-			S interface{}
+		// ContentUpdate holds details about calls to the ContentUpdate method.
+		ContentUpdate []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+			// Event is the event argument value.
+			Event models.ContentUpdated
 		}
 	}
-	lockMarshal sync.RWMutex
+	lockContentUpdate sync.RWMutex
 }
 
-// Marshal calls MarshalFunc.
-func (mock *MarshallerMock) Marshal(s interface{}) ([]byte, error) {
-	if mock.MarshalFunc == nil {
-		panic("MarshallerMock.MarshalFunc: method is nil but Marshaller.Marshal was just called")
+// ContentUpdate calls ContentUpdateFunc.
+func (mock *ContentUpdaterMock) ContentUpdate(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
+	if mock.ContentUpdateFunc == nil {
+		panic("ContentUpdaterMock.ContentUpdateFunc: method is nil but ContentUpdater.ContentUpdate was just called")
 	}
 	callInfo := struct {
-		S interface{}
+		Ctx   context.Context
+		Cfg   *config.Config
+		Event models.ContentUpdated
 	}{
-		S: s,
+		Ctx:   ctx,
+		Cfg:   cfg,
+		Event: event,
 	}
-	mock.lockMarshal.Lock()
-	mock.calls.Marshal = append(mock.calls.Marshal, callInfo)
-	mock.lockMarshal.Unlock()
-	return mock.MarshalFunc(s)
+	mock.lockContentUpdate.Lock()
+	mock.calls.ContentUpdate = append(mock.calls.ContentUpdate, callInfo)
+	mock.lockContentUpdate.Unlock()
+	return mock.ContentUpdateFunc(ctx, cfg, event)
 }
 
-// MarshalCalls gets all the calls that were made to Marshal.
+// ContentUpdateCalls gets all the calls that were made to ContentUpdate.
 // Check the length with:
-//     len(mockedMarshaller.MarshalCalls())
-func (mock *MarshallerMock) MarshalCalls() []struct {
-	S interface{}
+//
+//	len(mockedContentUpdater.ContentUpdateCalls())
+func (mock *ContentUpdaterMock) ContentUpdateCalls() []struct {
+	Ctx   context.Context
+	Cfg   *config.Config
+	Event models.ContentUpdated
 } {
 	var calls []struct {
-		S interface{}
+		Ctx   context.Context
+		Cfg   *config.Config
+		Event models.ContentUpdated
 	}
-	mock.lockMarshal.RLock()
-	calls = mock.calls.Marshal
-	mock.lockMarshal.RUnlock()
+	mock.lockContentUpdate.RLock()
+	calls = mock.calls.ContentUpdate
+	mock.lockContentUpdate.RUnlock()
 	return calls
 }

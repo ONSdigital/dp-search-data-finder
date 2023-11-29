@@ -20,6 +20,7 @@ type Config struct {
 	ZebedeeClientTimeout             time.Duration `envconfig:"ZEBEDEE_CLIENT_TIMEOUT"`
 	EnablePublishContentUpdatedTopic bool          `envconfig:"ENABLE_PUBLISH_CONTENT_UPDATED_TOPIC"`
 	EnableReindexTaskCounts          bool          `envconfig:"ENABLE_REINDEX_TASK_COUNTS"`
+	ZebedeeRequestLimit              int           `envconfig:"ZEBEDEE_REQUEST_LIMIT"`
 	ZebedeeURL                       string        `envconfig:"ZEBEDEE_URL"`
 	TaskNameValues                   string        `envconfig:"TASK_NAME_VALUES"`
 }
@@ -75,6 +76,7 @@ func Get() (*Config, error) {
 		},
 		ServiceAuthToken:     "",
 		ZebedeeClientTimeout: 30 * time.Second,
+		ZebedeeRequestLimit:  10,
 		ZebedeeURL:           "http://localhost:8082",
 		TaskNameValues:       "dataset-api,zebedee",
 	}

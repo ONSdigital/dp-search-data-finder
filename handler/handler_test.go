@@ -2,11 +2,21 @@ package handler_test
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"testing"
 
 	datasetClient "github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	zebedeeClient "github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	clientMock "github.com/ONSdigital/dp-search-data-finder/clients/mock"
+
+	"github.com/ONSdigital/dp-search-data-finder/config"
+	"github.com/ONSdigital/dp-search-data-finder/event/mock"
+	"github.com/ONSdigital/dp-search-data-finder/handler"
 	"github.com/ONSdigital/dp-search-data-finder/models"
 	"github.com/pkg/errors"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
@@ -22,88 +32,167 @@ var (
 	getPublishedIndexEmpty = func(ctx context.Context, publishedIndexRequestParams *zebedeeClient.PublishedIndexRequestParams) (zebedeeClient.PublishedIndex, error) {
 		return zebedeeClient.PublishedIndex{}, errZebedee
 	}
+
+	mockZebedeePublishedIndexResponse = zebedeeClient.PublishedIndex{
+		Count: 1,
+		Limit: 0,
+		Items: []zebedeeClient.PublishedIndexItem{
+			{
+				URI: "http://www.ons.gov.uk",
+			},
+		},
+		Offset:     0,
+		TotalCount: 1,
+	}
+
 	getPublishedIndexFunc = func(ctx context.Context, publishedIndexRequestParams *zebedeeClient.PublishedIndexRequestParams) (zebedeeClient.PublishedIndex, error) {
-		return zebedeeClient.PublishedIndex{}, nil
+		return mockZebedeePublishedIndexResponse, nil
+	}
+
+	generateFakeDatasetID = func(num int) string {
+		return fmt.Sprintf("RM%s", strconv.Itoa(num))
+	}
+
+	generateMockDatasetAPIResponse = func(numberOfDatasets int) datasetClient.List {
+		items := make([]datasetClient.Dataset, numberOfDatasets)
+
+		for i := 0; i < numberOfDatasets; i++ {
+			newID := generateFakeDatasetID(i + 1)
+			newItem := datasetClient.Dataset{
+				ID: newID,
+				Current: &datasetClient.DatasetDetails{
+					ID: newID,
+				},
+			}
+			items = append(items, newItem)
+		}
+
+		mockDatasetAPIResponse := datasetClient.List{
+			Count: numberOfDatasets,
+			Limit: 0,
+			Items: items,
+		}
+
+		return mockDatasetAPIResponse
 	}
 
 	errDatasetAPI = errors.New("dataset-api test error")
-	getDatasetsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, q *datasetClient.QueryParams) (datasetClient.List, error) {
+	getDatasetsOk = func(_ context.Context, _ string, _ string, _ string, q *datasetClient.QueryParams) (datasetClient.List, error) {
+		if q.Offset == 0 {
+			return generateMockDatasetAPIResponse(2), nil
+		}
 		return datasetClient.List{}, nil
 	}
-	getFullEditionsDetailsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, datasetID string) ([]datasetClient.EditionsDetails, error) {
-		return []datasetClient.EditionsDetails{}, nil
+
+	generateMockDatasetEditionAPIResponse = func(id string) []datasetClient.EditionsDetails {
+		return []datasetClient.EditionsDetails{
+			{
+				ID: id,
+				Current: datasetClient.Edition{
+					ID: id,
+					Links: datasetClient.Links{
+						LatestVersion: datasetClient.Link{
+							ID: id,
+						},
+					},
+				},
+			},
+		}
 	}
+
+	getFullEditionsDetailsOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, datasetID string) ([]datasetClient.EditionsDetails, error) {
+		return generateMockDatasetEditionAPIResponse(datasetID), nil
+	}
+
+	generateMockDatasetVersionAPIResponse = func(id string) datasetClient.Metadata {
+		return datasetClient.Metadata{
+			DatasetLinks: datasetClient.Links{
+				LatestVersion: datasetClient.Link{
+					URL: fmt.Sprintf("http://www.ons.gov.uk/datasets/%s", id),
+				},
+			},
+		}
+	}
+
 	getVersionMetadataOk = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, id string, edition string, version string) (datasetClient.Metadata, error) {
-		return datasetClient.Metadata{}, nil
+		return generateMockDatasetVersionAPIResponse(id), nil
 	}
 	getDatasetsError = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, q *datasetClient.QueryParams) (datasetClient.List, error) {
 		return datasetClient.List{}, errDatasetAPI
 	}
+
+	generateExpectedDatasetContentUpdatedEvent = func(id int) models.ContentUpdated {
+		datasetID := generateFakeDatasetID(id)
+
+		return models.ContentUpdated{
+			URI:         fmt.Sprintf("http://www.ons.gov.uk/datasets/%s", datasetID),
+			JobID:       testEvent.JobID,
+			TraceID:     testEvent.TraceID,
+			SearchIndex: testEvent.SearchIndex,
+			DataType:    "datasets",
+		}
+	}
 )
 
-// TODO: This will be enabled once the dataset uri extraction code is added.
-//func TestReindexRequestedHandler_Handle(t *testing.T) {
-//	testCfg, err := config.Get()
-//	if err != nil {
-//		t.Errorf("failed to retrieve default configuration, error is: %v", err)
-//	}
+func TestHandle(t *testing.T) {
+	testCfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error is: %v", err)
+	}
 
-//Convey("Given an event handler working successfully, and an event containing a URI", t, func() {
-//	zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-//	datasetAPIMock := &clientMock.DatasetAPIClientMock{
-//		GetDatasetsFunc:            getDatasetsOk,
-//		GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
-//		GetVersionMetadataFunc:     getVersionMetadataOk,
-//	}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMock}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Zebedee and Dataset API are called to get document urls", func() {
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
+	testCfg.EnablePublishContentUpdatedTopic = true
 
-//Convey("Given an event handler not working successfully with Zebedee, and an event containing a jobId", t, func() {
-//	zebedeeMockInError := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexEmpty}
-//	datasetAPIMock := &clientMock.DatasetAPIClientMock{
-//		GetDatasetsFunc:            getDatasetsOk,
-//		GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
-//		GetVersionMetadataFunc:     getVersionMetadataOk,
-//	}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMockInError, DatasetAPICli: datasetAPIMock}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Zebedee is called 1 time with the expected error which is logged", func() {
-//			So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMockInError.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
+	expectedLegacyContentUpdatedEvent := models.ContentUpdated{
+		URI:         "http://www.ons.gov.uk",
+		JobID:       testEvent.JobID,
+		TraceID:     testEvent.TraceID,
+		SearchIndex: testEvent.SearchIndex,
+		DataType:    "legacy",
+	}
 
-//Convey("Given an event handler not working successfully with Dataset API, and an event containing a jobId", t, func() {
-//	zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
-//	datasetAPIMockErr := &clientMock.DatasetAPIClientMock{GetDatasetsFunc: getDatasetsError}
-//	eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMockErr}
-//
-//	Convey("When given a valid event", func() {
-//		eventHandler.Handle(testCtx, &testEvent)
-//
-//		Convey("Then Dataset API is called 1 time with the expected error which is logged", func() {
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
-//			So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
-//			So(datasetAPIMockErr.GetDatasetsCalls(), ShouldNotBeEmpty)
-//			So(datasetAPIMockErr.GetDatasetsCalls(), ShouldHaveLength, 1)
-//		})
-//	})
-//})
-//}
+	Convey("Given an event handler, working zebedee and dataset clients, kafka producer and an event containing a URI", t, func() {
+		zebedeeMock := &clientMock.ZebedeeClientMock{GetPublishedIndexFunc: getPublishedIndexFunc}
+		datasetAPIMock := &clientMock.DatasetAPIClientMock{
+			GetDatasetsFunc:            getDatasetsOk,
+			GetFullEditionsDetailsFunc: getFullEditionsDetailsOk,
+			GetVersionMetadataFunc:     getVersionMetadataOk,
+		}
+
+		contentUpdaterMock := &mock.ContentUpdaterMock{
+			ContentUpdateFunc: func(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error {
+				return nil
+			},
+		}
+
+		eventHandler := &handler.ReindexRequestedHandler{Config: testCfg, ZebedeeCli: zebedeeMock, DatasetAPICli: datasetAPIMock, ContentUpdatedProducer: contentUpdaterMock}
+
+		Convey("When given a valid event", func() {
+			eventHandler.Handle(testCtx, &testEvent)
+
+			Convey("Then Zebedee and Dataset API are called to get document urls", func() {
+				So(zebedeeMock.GetPublishedIndexCalls(), ShouldNotBeEmpty)
+				So(zebedeeMock.GetPublishedIndexCalls(), ShouldHaveLength, 1)
+				So(datasetAPIMock.GetDatasetsCalls(), ShouldNotBeEmpty)
+				So(datasetAPIMock.GetDatasetsCalls(), ShouldHaveLength, 2)
+			})
+
+			// Due to parallel calls, the events can end up in any order
+			events := make([]models.ContentUpdated, len(contentUpdaterMock.ContentUpdateCalls()))
+
+			for i, call := range contentUpdaterMock.ContentUpdateCalls() {
+				events[i] = call.Event
+			}
+
+			Convey("Then a legacy event should be called to be produced", func() {
+				So(events, ShouldHaveLength, 3)
+				So(events, ShouldContain, expectedLegacyContentUpdatedEvent)
+			})
+
+			Convey("Then a datasets event should be called to be produced", func() {
+				So(events, ShouldHaveLength, 3)
+				So(events, ShouldContain, generateExpectedDatasetContentUpdatedEvent(1))
+				So(events, ShouldContain, generateExpectedDatasetContentUpdatedEvent(2))
+			})
+		})
+	})
+}

@@ -9,11 +9,16 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-//go:generate moq -out ./mock/producer.go -pkg mock . Marshaller
+//go:generate moq -out ./mock/marshaller.go -pkg mock . Marshaller
+//go:generate moq -out ./mock/producer.go -pkg mock . ContentUpdater
 
 // Marshaller defines a type for marshalling the requested object into the required format.
 type Marshaller interface {
 	Marshal(s interface{}) ([]byte, error)
+}
+
+type ContentUpdater interface {
+	ContentUpdate(ctx context.Context, cfg *config.Config, event models.ContentUpdated) error
 }
 
 // ContentUpdatedProducer produces kafka messages for instances which have been successfully processed.
