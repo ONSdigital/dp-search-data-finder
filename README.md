@@ -1,11 +1,11 @@
 # dp-search-data-finder
-A deprecated service that receives events requesting reindex jobs and finds data to populate the new indexes created.
 
 ---
 
 :warning: This repository was be archived in November 2024 is no longer in development. :warning:
 
 ---
+A deprecated service that receives events requesting reindex jobs and finds data to populate the new indexes created.
 
 ### Getting started
 
